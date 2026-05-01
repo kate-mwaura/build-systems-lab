@@ -53,3 +53,40 @@ In a DevOps pipeline, Maven is responsible for the build and validation stage. I
 - package the application into a versioned artifact (JAR/WAR)  
 
 This artifact is then used in later stages such as containerization (Docker) and deployment.
+
+---
+
+# 🔹 Maven Project Structure
+
+## Standard Directory Layout
+
+```bash
+project-root/
+│
+├── pom.xml
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/example/project/
+│   │   │       ├── Application.java
+│   │   │       └── controller/
+│   │   │           └── GreetingController.java
+│   │   │
+│   │   └── resources/
+│   │       ├── application.properties
+│   │       └── logback.xml
+│   │
+│   └── test/
+│       ├── java/
+│       │   └── com/example/project/
+│       │       └── ApplicationTests.java
+│       │
+│       └── resources/
+│
+└── target/
+    ├── classes/
+    ├── test-classes/
+    └── project-name.jar
+
+
