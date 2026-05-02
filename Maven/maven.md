@@ -367,3 +367,103 @@ In a DevOps workflow, this file directly connects:
 
 </project>
 ```
+
+---
+
+### Project (Root Element)
+
+`<project>` is the root container of the POM. It defines this file as a Maven project and includes the XML schema used to validate its structure.
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+```
+
+---
+
+### modelVersion
+
+Defines the version of the POM model Maven should use. This ensures Maven parses the file correctly.
+
+```xml
+<modelVersion>4.0.0</modelVersion>
+```
+
+---
+
+### GAV (Project Identity)
+
+Defines the unique identity of the project in Maven repositories.
+
+- `groupId` → namespace (organization/domain)  
+- `artifactId` → project name  
+- `version` → release version  
+
+```xml
+<groupId>com.example</groupId>
+<artifactId>greeting-service</artifactId>
+<version>1.0.0</version>
+```
+
+---
+
+### packaging
+
+Specifies the type of artifact Maven should produce after build.
+
+Common types:
+- `jar` → standard Java application  
+- `war` → web application  
+
+```xml
+<packaging>jar</packaging>
+```
+
+---
+
+### name & description
+
+Provides human-readable metadata for the project. Useful in repositories and documentation.
+
+```xml
+<name>greeting-service</name>
+<description>Sample Spring Boot service</description>
+```
+
+---
+
+### parent
+
+Defines a parent POM to inherit configuration from (commonly Spring Boot).
+
+This allows reuse of:
+- dependency versions  
+- plugin configurations  
+- default build settings  
+
+```xml
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.0.5</version>
+</parent>
+```
+
+---
+
+### properties
+
+Defines reusable variables across the POM. This centralizes configuration and avoids duplication.
+
+Typical use cases:
+- Java version  
+- encoding  
+- dependency versions  
+
+```xml
+<properties>
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+</properties>
+```
