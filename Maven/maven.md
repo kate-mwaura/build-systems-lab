@@ -467,3 +467,203 @@ Typical use cases:
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 </properties>
 ```
+
+---
+
+## 🔹 Dependencies and Dependency Management
+
+### What are Dependencies?
+
+Dependencies are pre-built libraries that an application requires to run. Instead of writing everything from scratch, developers reuse existing, tested code from external sources like Maven Central.
+
+Example: Instead of building a logging system, you import `logback` or `slf4j`.
+
+---
+
+### Transitive Dependencies
+
+Transitive dependencies are dependencies required by another dependency.
+
+Maven automatically:
+- downloads your declared dependency  
+- resolves and downloads all its required dependencies  
+
+This keeps the `pom.xml` clean and avoids manually managing large dependency trees.
+
+---
+
+### Direct vs Transitive Dependencies
+
+- **Direct dependencies** → explicitly defined in `pom.xml`  
+- **Transitive dependencies** → pulled in automatically by Maven  
+
+---
+
+### How Maven Resolves Dependencies
+
+During the build:
+
+1. Maven first checks the dependencies in the **local repository** (`~/.m2/repository`)  
+2. If not found, it downloads from **remote repositories (Maven Central)**  
+3. Dependencies are cached locally in **~/.m2/repository**  for future builds  
+
+---
+
+## Dependencies Structure
+
+```xml
+<dependencies>
+
+    <dependency>
+        <groupId>org.example</groupId>
+        <artifactId>example-lib</artifactId>
+        <version>1.2.3</version>
+
+        <scope>test</scope>
+
+        <exclusions>
+            <exclusion>
+                <groupId>org.unwanted</groupId>
+                <artifactId>bad-lib</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+
+</dependencies>
+```
+
+---
+
+## Breaking Down Dependency Tags
+
+### GAV (Dependency Identity)
+
+Identifies a dependency uniquely:
+
+```xml
+<groupId>org.example</groupId>
+<artifactId>example-lib</artifactId>
+<version>1.2.3</version>
+```
+
+---
+
+### scope
+
+Controls where and how a dependency is used.
+
+Common scopes:
+
+- **compile** (default) → available everywhere  
+- **test** → only used during testing  
+- **provided** → provided by runtime (e.g. servlet container)  
+- **runtime** → not needed at compile time, required at runtime    
+- **import** → used with BOM in dependencyManagement  
+
+```xml
+<scope>test</scope>
+```
+
+---
+
+### exclusions
+
+Used to remove unwanted transitive dependencies.
+
+Helps:
+- avoid conflicts  
+- reduce vulnerabilities  
+- keep builds clean  
+
+```xml
+<exclusions>
+    <exclusion>
+        <groupId>org.unwanted</groupId>
+        <artifactId>bad-lib</artifactId>
+    </exclusion>
+</exclusions>
+```
+
+---
+
+## Dependency Management
+
+Defines dependency versions without actually importing them.
+
+Used mainly in:
+- parent projects  
+- multi-module architectures  
+
+Child modules inherit versions from here.
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>example-bom</artifactId>
+            <version>1.0.0</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+---
+
+## BOM (Bill of Materials)
+
+A BOM is a special POM that defines **versions for multiple dependencies** without including them.
+
+Purpose:
+- avoid version conflicts  
+- centralize version control  
+- simplify dependency declarations  
+
+### Why Spring Boot Parent Acts Like a BOM
+
+Spring Boot parent:
+- manages dependency versions  
+- manages plugin versions  
+
+This allows you to define only:
+```xml
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-web</artifactId>
+```
+
+Without specifying a version, it is inherited.
+
+---
+
+## Dependency Conflict Resolution
+
+### How Maven Resolves Conflicts
+
+Maven uses **"nearest definition wins"**:
+
+- The dependency closest to your project in the tree is selected  
+- Other versions are ignored  
+
+---
+
+### Best Practices to Avoid Conflicts
+
+- Use **dependencyManagement** to enforce versions  
+- Use **BOMs** (e.g. Spring Boot)  
+- Avoid mixing multiple versions of the same library  
+- Use **exclusions** to remove conflicting dependencies  
+- Regularly scan dependencies (Snyk, OWASP, etc.)  
+
+---
+
+### DevOps Insight
+
+Dependency management directly impacts:
+
+- build stability  
+- security (vulnerabilities)  
+- reproducibility across environments  
+
+Poor dependency control = unstable builds + production risks
