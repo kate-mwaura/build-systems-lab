@@ -89,4 +89,63 @@ project-root/
     ├── test-classes/
     └── project-name.jar
 
+```
+---
+## Key Files and Directories
+
+### `pom.xml`
+
+The `pom.xml` (Project Object Model) is the core configuration file of a Maven project.
+
+It defines:
+- project dependencies  
+- build configuration  
+- plugins  
+- project metadata (name, version, packaging)  
+
+It acts as the **source of truth** for how the project is built, tested, and packaged.
+
+---
+
+### `src/main/java`
+
+This directory contains the main application source code.
+
+All production-ready `.java` files are placed here, following the package structure (e.g., `com.example.project`).
+
+---
+
+### `src/test/java`
+
+This directory contains test classes.
+
+These are used to validate application behavior using testing frameworks like JUnit. Maven automatically runs these tests during the build process.
+
+---
+
+### `src/main/resources`
+
+This directory stores configuration and resource files used by the application.
+
+Common files include:
+- `application.properties` → application configuration  
+- `logback.xml` → logging configuration  
+- static files (HTML, CSS, JSON)
+
+These files are included in the final build artifact.
+
+---
+
+### `target/`
+
+The `target` directory is generated automatically when a build is executed.
+
+It contains:
+- compiled `.class` files  
+- test results and reports  
+- the final packaged artifact (JAR/WAR)  
+
+This directory is temporary and should not be committed to version control.
+
+---
 
