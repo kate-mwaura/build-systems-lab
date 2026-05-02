@@ -145,7 +145,36 @@ It contains:
 - test results and reports  
 - the final packaged artifact (JAR/WAR)  
 
-This directory is temporary and should not be committed to version control.
+This directory is temporary and should not be committed to version control should be added to the .gitignore file.
 
 ---
+
+## Why Convention Matters
+
+Maven follows a convention over configuration approach.
+
+This means:
+- you don’t need to define where your source code or tests are  
+- Maven already expects files in specific locations  
+- plugins and dependencies rely on this structure to work correctly  
+
+This reduces the need for manual configuration and makes projects easier to:
+- understand  
+- maintain  
+- run across different environments  
+
+---
+
+## What Happens When Convention is Broken
+
+If the standard structure is not followed, Maven and its plugins may not work as expected.
+
+Common issues include:
+
+- tests are not executed if they are not located in `src/test/java`  
+- plugins fail to run because they cannot find the expected files  
+- compilation issues if source files are misplaced  
+- incomplete or broken build artifacts due to missing classes  
+
+Following Maven’s structure ensures that the build process runs smoothly without additional configuration.
 
