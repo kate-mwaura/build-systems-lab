@@ -178,3 +178,192 @@ Common issues include:
 
 Following Maven’s structure ensures that the build process runs smoothly without additional configuration.
 
+---
+
+## 🔹pom.xml (Heart of Maven)
+
+The `pom.xml` (Project Object Model) is the central configuration file in a Maven project. It defines everything required to build, test, and package an application.
+
+It acts as the **single source of truth**, controlling:
+
+- project identity  
+- dependencies  
+- plugins  
+- build behavior  
+- artifact distribution  
+
+In a DevOps workflow, this file directly connects:
+
+`code → build → test → artifact → deployment`
+
+---
+
+```xml
+<!-- Root element: defines this as a Maven project -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Maven model version -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ===================== -->
+    <!-- Project Identity (GAV) -->
+    <!-- ===================== -->
+    <!-- Defines unique identity of the project -->
+    <groupId>com.example</groupId>
+    <artifactId>greeting-service</artifactId>
+    <version>1.0.0</version>
+
+    <!-- Packaging type: jar, war, etc -->
+    <packaging>jar</packaging>
+
+    <!-- ===================== -->
+    <!-- Project Metadata -->
+    <!-- ===================== -->
+    <name>greeting-service</name>
+    <description>Sample Spring Boot service</description>
+
+    <!-- ===================== -->
+    <!-- Parent (Inheritance) -->
+    <!-- ===================== -->
+    <!-- Used to inherit configurations (common in Spring Boot projects) -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.5</version>
+    </parent>
+
+    <!-- ===================== -->
+    <!-- Properties (Centralized Values) -->
+    <!-- ===================== -->
+    <!-- Used to define reusable variables -->
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- ===================== -->
+    <!-- Dependency Management (Version Control Layer) -->
+    <!-- ===================== -->
+    <!-- Defines versions but does NOT import dependencies -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.example</groupId>
+                <artifactId>example-bom</artifactId>
+                <version>1.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <!-- ===================== -->
+    <!-- Dependencies (Actual Libraries Used) -->
+    <!-- ===================== -->
+    <dependencies>
+
+        <!-- Example dependency -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Test dependency -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Example with exclusion -->
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>example-lib</artifactId>
+            <version>1.2.3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.unwanted</groupId>
+                    <artifactId>bad-lib</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+    </dependencies>
+
+    <!-- ===================== -->
+    <!-- Build Configuration -->
+    <!-- ===================== -->
+    <build>
+
+        <!-- Plugin Management (Locks plugin versions) -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.example</groupId>
+                    <artifactId>example-plugin</artifactId>
+                    <version>1.0.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <!-- Plugins (Executed during build lifecycle) -->
+        <plugins>
+
+            <!-- Example plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+
+                <!-- Plugin configuration -->
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                </configuration>
+            </plugin>
+
+            <!-- Plugin with execution -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <!-- ===================== -->
+    <!-- Distribution Management -->
+    <!-- ===================== -->
+    <!-- Defines where artifacts are published -->
+    <distributionManagement>
+        <repository>
+            <id>release-repo</id>
+            <url>https://repo.example.com/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>snapshot-repo</id>
+            <url>https://repo.example.com/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>
+```
