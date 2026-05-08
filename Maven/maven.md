@@ -1078,3 +1078,244 @@ Production environments usually inject these values through environment variable
 <password>${env.MAVEN_REPO_PASSWORD}</password>
 ```
 
+### Maven profiles
+
+Profiles are environment-specific configurations Maven uses to customize how a project builds and behaves under different environments.
+
+They allow a single project to have different:
+- dependencies
+- properties
+- plugins
+- repositories
+- build configurations
+
+without modifying the main `pom.xml`.
+
+Profiles are commonly used for:
+- development environments
+- testing environments
+- staging deployments
+- production deployments
+- internal company repositories
+
+Maven profiles can be defined inside:
+- `pom.xml`
+- `settings.xml`
+
+The `pom.xml` profile defines the build behavior, while the `settings.xml` profile usually provides machine-specific configurations like repositories, credentials, and mirrors.
+
+---
+
+### Profile structure inside `pom.xml`
+
+```xml
+<profiles>
+    <profile>
+        <id>production</id>
+
+        <properties>
+            <java.version>21</java.version>
+            <spring.profiles.active>prod</spring.profiles.active>
+        </properties>
+
+        <dependencies>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <scope>runtime</scope>
+            </dependency>
+        </dependencies>
+
+        <build>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+
+                    <configuration>
+                        <skipTests>false</skipTests>
+                    </configuration>
+                </plugin>
+            </plugins>
+
+        </build>
+    </profile>
+</profiles>
+```
+
+---
+
+### Profile structure inside `settings.xml`
+
+```xml
+<settings>
+    <profiles>
+        <profile>
+
+            <id>production</id>
+
+            <repositories>
+                <repository>
+                    <id>company-public</id>
+                    <url>https://repo.example.com/repository/maven-public/</url>
+                </repository>
+            </repositories>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>company-plugins</id>
+                    <url>https://repo.example.com/repository/maven-plugins/</url>
+                </pluginRepository>
+            </pluginRepositories>
+
+            <properties>
+                <deployment.environment>production</deployment.environment>
+            </properties>
+
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>production</activeProfile>
+    </activeProfiles>
+
+</settings>
+```
+
+---
+
+### Profile tag breakdown
+
+#### profiles
+
+Container that holds all Maven profiles.
+
+```xml
+<profiles>...</profiles>
+```
+
+---
+
+#### profile
+
+Defines a single environment-specific configuration.
+
+```xml
+<profile>
+    <id>production</id>
+</profile>
+```
+
+---
+
+#### id
+
+Unique identifier used to activate a specific profile.
+
+```xml
+<id>production</id>
+```
+
+---
+
+#### properties
+
+Defines variables used only when the profile is active.
+
+This allows different environments to use different configuration values during builds.
+
+```xml
+<properties>
+    <spring.profiles.active>prod</spring.profiles.active>
+</properties>
+```
+
+---
+
+#### dependencies
+
+Defines environment-specific dependencies.
+
+Example:
+- development profile → debugging libraries
+- production profile → production database drivers
+
+```xml
+<dependencies>...</dependencies>
+```
+
+---
+
+#### build
+
+Defines environment-specific build behavior.
+
+```xml
+<build>...</build>
+```
+
+---
+
+#### plugins
+
+Defines plugins Maven should use when the profile is active.
+
+```xml
+<plugins>...</plugins>
+```
+
+---
+
+#### repositories
+
+Defines repositories Maven should use to download dependencies for that environment.
+
+```xml
+<repositories>...</repositories>
+```
+
+---
+
+#### pluginRepositories
+
+Defines repositories Maven should use when downloading Maven plugins.
+
+```xml
+<pluginRepositories>...</pluginRepositories>
+```
+
+---
+
+#### activeProfiles
+
+Automatically activates selected profiles during Maven builds.
+
+```xml
+<activeProfiles>
+    <activeProfile>production</activeProfile>
+</activeProfiles>
+```
+
+---
+
+### How pom.xml and settings.xml profiles work together
+
+The `pom.xml` profile controls the application's build behavior such as:
+- dependencies
+- plugins
+- properties
+- packaging behavior
+
+The `settings.xml` profile controls the local machine or organization-specific environment such as:
+- internal repositories
+- plugin repositories
+- mirrors
+- credentials
+- deployment environments
+
+This separation keeps sensitive infrastructure configuration outside the project source code while still allowing Maven to build consistently across environments.
