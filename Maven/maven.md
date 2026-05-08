@@ -1078,8 +1078,10 @@ Production environments usually inject these values through environment variable
 <password>${env.MAVEN_REPO_PASSWORD}</password>
 ```
 
-### Maven profiles
+---
 
+### Maven Profiles
+---
 Profiles are environment-specific configurations Maven uses to customize how a project builds and behaves under different environments.
 
 They allow a single project to have different:
@@ -1319,3 +1321,94 @@ The `settings.xml` profile controls the local machine or organization-specific e
 - deployment environments
 
 This separation keeps sensitive infrastructure configuration outside the project source code while still allowing Maven to build consistently across environments.
+
+---
+
+## Maven Repositories
+
+Repositories are storage locations where Maven downloads dependencies and plugins from, or uploads built artifacts to.
+
+Maven repositories are a major part of the dependency management system because they allow projects to reuse already built libraries instead of rewriting everything from scratch.
+
+Maven mainly works with three repository types:
+- Local repository
+- Central repository
+- Remote repositories
+
+---
+
+### Local repository (`~/.m2/repository`)
+
+The local repository is Maven’s cache stored inside the user's home directory.
+
+```bash
+~/.m2/repository
+```
+
+When Maven downloads a dependency or plugin for the first time, it stores a local copy inside the `.m2/repository` directory.
+
+The next time the same dependency is needed, Maven retrieves it directly from the local repository instead of downloading it again from the internet.
+
+This helps:
+- speed up builds
+- reduce network usage
+- support offline builds
+- improve dependency reuse across projects
+
+The local repository is automatically managed by Maven.
+
+---
+
+### Maven Central Repository
+
+The Maven Central Repository is the default public repository Maven communicates with when downloading dependencies and plugins.
+
+It contains thousands of open-source Java libraries published by developers and organizations worldwide.
+
+When a dependency is listed inside the `pom.xml`, Maven first checks:
+1. the local repository (`.m2`)
+2. then Maven Central if the dependency is missing locally
+
+Maven Central is the main source for most public Java dependencies.
+
+---
+
+### Remote repositories
+
+Remote repositories are external repositories hosted outside the local machine.
+
+These repositories are commonly used by organizations to:
+- store internal company libraries
+- manage production artifacts
+- control dependency access
+- scan artifacts for vulnerabilities
+- improve dependency management across teams
+
+Common remote repository managers include:
+- Nexus Repository
+- JFrog Artifactory
+- GitHub Packages
+- AWS CodeArtifact
+
+Unlike Maven Central, remote repositories can contain:
+- private company dependencies
+- internal plugins
+- production release artifacts
+- snapshot versions
+
+Remote repositories are usually configured inside:
+- `pom.xml`
+- `settings.xml`
+- company CI/CD pipelines
+
+---
+
+### Maven repository resolution flow
+
+When Maven needs a dependency, it follows this order:
+
+1. Local repository (`~/.m2/repository`)
+2. Remote repositories or mirrors
+3. Maven Central Repository
+
+Once downloaded, the dependency is cached locally for future builds.
