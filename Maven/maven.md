@@ -667,3 +667,186 @@ Dependency management directly impacts:
 - reproducibility across environments  
 
 Poor dependency control = unstable builds + production risks
+
+---
+
+## Plugins and Plugin Management (Execution Layer)
+
+### What are plugins?
+
+Plugins are the execution layer of Maven. They are responsible for performing actual build tasks such as compiling source code, running tests, packaging artifacts, and generating reports. Instead of Maven doing the work itself, it delegates these operations to plugins.
+
+For example:
+- maven-compiler-plugin → compiles Java code into bytecode  
+- maven-surefire-plugin → runs unit tests before packaging  
+
+### Plugin structure
+
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.11</version>
+
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>prepare-agent</goal>
+                    </goals>
+                </execution>
+
+                <execution>
+                    <id>report</id>
+                    <phase>test</phase>
+                    <goals>
+                        <goal>report</goal>
+                    </goals>
+                </execution>
+
+                <execution>
+                    <id>check</id>
+                    <goals>
+                        <goal>check</goal>
+                    </goals>
+                    <configuration>
+                        <rules>
+                            <rule>
+                                <element>BUNDLE</element>
+                                <limits>
+                                    <limit>
+                                        <counter>INSTRUCTION</counter>
+                                        <value>COVEREDRATIO</value>
+                                        <minimum>0.90</minimum>
+                                    </limit>
+                                </limits>
+                            </rule>
+                        </rules>
+                    </configuration>
+                </execution>
+            </executions>
+
+        </plugin>
+    </plugins>
+</build>
+```
+
+### Plugin tag breakdown
+
+#### build
+
+Defines how the project is built. This is where plugins are configured and executed.
+
+```xml
+<build>...</build>
+```
+
+#### plugins
+
+Container that holds all plugins used in the project.
+
+```xml
+<plugins>...</plugins>
+```
+
+#### plugin
+
+Defines a single plugin used during the build process.
+
+```xml
+<plugin>
+    <groupId>org.example</groupId>
+    <artifactId>example-plugin</artifactId>
+    <version>1.0.0</version>
+</plugin>
+```
+
+#### GAV (Plugin Identity)
+
+Identifies the plugin uniquely in Maven repositories.
+
+```xml
+<groupId>org.example</groupId>
+<artifactId>example-plugin</artifactId>
+<version>1.0.0</version>
+```
+
+#### executions
+
+Defines when and how a plugin runs in the build lifecycle.
+
+```xml
+<executions>...</executions>
+```
+
+#### execution
+
+Represents a single run of the plugin with its own configuration.
+
+```xml
+<execution>
+    <id>example</id>
+</execution>
+```
+
+#### id
+
+Unique identifier for a specific execution or configuration.
+
+```xml
+<id>report</id>
+```
+
+#### configuration
+
+Defines custom parameters that control plugin behavior.
+
+```xml
+<configuration>...</configuration>
+```
+
+### Plugins phases and goals
+
+Phases define when an action happens in the Maven lifecycle.  
+Goals define what action the plugin performs during that phase.
+
+### Common plugins
+
+| plugin | phase | goal |
+|--------|-------|------|
+| maven-clean-plugin | clean | clean:clean - deletes the target directory |
+| maven-compiler-plugin | compile | compiler:compile - compiles main source code |
+| maven-compiler-plugin | test-compile | compiler:testCompile - compiles test code |
+| maven-surefire-plugin | test | surefire:test - runs unit tests |
+| maven-jar-plugin | package | jar:jar - packages code into a jar |
+| spring-boot-maven-plugin | package | spring-boot:repackage - builds executable fat jar |
+| maven-install-plugin | install | install:install - installs artifact to local repo |
+| maven-deploy-plugin | deploy | deploy:deploy - pushes artifact to remote repo |
+| maven-resources-plugin | process-resources | resources:resources - copies resource files |
+| jacoco-maven-plugin | test | jacoco:report - generates coverage report |
+| jacoco-maven-plugin | verify | jacoco:check - enforces coverage rules |
+
+### Plugin management
+
+Plugin management defines plugin versions centrally without executing them.  
+It is mainly used in parent projects so child modules inherit consistent plugin versions.
+
+### Plugin management structure
+
+```xml
+<build>
+    <pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.example</groupId>
+                <artifactId>example-plugin</artifactId>
+                <version>1.0.0</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+</build>
+```
+
+---
+
