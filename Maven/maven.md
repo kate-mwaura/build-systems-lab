@@ -850,3 +850,231 @@ It is mainly used in parent projects so child modules inherit consistent plugin 
 
 ---
 
+## Distribution Management
+
+### What distribution management is
+
+`distributionManagement` defines where Maven should publish the final built artifacts after a successful build.
+
+This is the deployment layer of Maven. Instead of keeping the generated `.jar` or `.war` file locally inside the `target/` directory, Maven pushes the artifact to remote repositories where other developers, services, or deployment pipelines can access it.
+
+In production environments this is commonly used with:
+- Nexus
+- Artifactory
+- GitHub Packages
+- Internal company repositories
+
+Maven uses the repository `id` defined in `distributionManagement` to communicate with matching credentials stored inside the `settings.xml` file.
+
+### Distribution management structure
+
+```xml
+<distributionManagement>
+
+    <repository>
+        <id>company-releases</id>
+        <name>Company Release Repository</name>
+        <url>https://repo.example.com/repository/maven-releases/</url>
+    </repository>
+
+    <snapshotRepository>
+        <id>company-snapshots</id>
+        <name>Company Snapshot Repository</name>
+        <url>https://repo.example.com/repository/maven-snapshots/</url>
+    </snapshotRepository>
+
+</distributionManagement>
+```
+
+### Distribution management tag breakdown
+
+#### distributionManagement
+
+Defines where Maven should publish built artifacts after packaging.
+
+```xml
+<distributionManagement>...</distributionManagement>
+```
+
+#### repository
+
+Defines the repository where stable production-ready releases are deployed.
+
+```xml
+<repository>
+    <id>company-releases</id>
+    <url>https://repo.example.com/repository/maven-releases/</url>
+</repository>
+```
+
+#### snapshotRepository
+
+Defines where development or unstable snapshot versions are deployed.
+
+Snapshot versions are usually under active development.
+
+```xml
+<snapshotRepository>
+    <id>company-snapshots</id>
+    <url>https://repo.example.com/repository/maven-snapshots/</url>
+</snapshotRepository>
+```
+
+#### id
+
+Unique identifier used to link the repository with credentials inside the `settings.xml` file.
+
+The IDs inside `distributionManagement` and `settings.xml` must match for authentication to work.
+
+```xml
+<id>company-releases</id>
+```
+
+#### url
+
+Defines the repository endpoint Maven communicates with when uploading artifacts.
+
+```xml
+<url>https://repo.example.com/repository/maven-releases/</url>
+```
+
+---
+
+## settings.xml
+
+### What settings.xml is
+
+The `settings.xml` file is Maven’s local configuration file located inside the `.m2` directory.
+
+```bash
+~/.m2/settings.xml
+```
+
+Unlike the `pom.xml`, the `settings.xml` file is machine-specific and is mainly used to store:
+- repository credentials
+- mirrors
+- private repository configurations
+- proxy settings
+- active profiles
+
+This file should never be committed to version control because it can contain sensitive credentials like usernames, passwords, and access tokens.
+
+The `pom.xml` defines *what* repository Maven should communicate with, while the `settings.xml` file defines *how* Maven authenticates and connects to those repositories.
+
+### settings.xml structure
+
+```xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+          https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+    <mirrors>
+        <mirror>
+            <id>company-mirror</id>
+            <name>Internal Maven Mirror</name>
+            <url>https://repo.example.com/repository/maven-public/</url>
+            <mirrorOf>*</mirrorOf>
+        </mirror>
+    </mirrors>
+
+    <servers>
+        <server>
+            <id>company-releases</id>
+            <username>${env.MAVEN_REPO_USER}</username>
+            <password>${env.MAVEN_REPO_PASSWORD}</password>
+        </server>
+        <server>
+            <id>company-snapshots</id>
+            <username>${env.MAVEN_REPO_USER}</username>
+            <password>${env.MAVEN_REPO_PASSWORD}</password>
+        </server>
+    </servers>
+
+    <profiles>
+        <profile>
+            <id>internal-repositories</id>
+
+            <repositories>
+                <repository>
+                    <id>company-public</id>
+                    <url>https://repo.example.com/repository/maven-public/</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>internal-repositories</activeProfile>
+    </activeProfiles>
+
+</settings>
+```
+
+### settings.xml tag breakdown
+
+#### mirrors
+
+Defines alternative repositories Maven should use when downloading dependencies.
+
+Mirrors act like routing rules and can force Maven to fetch dependencies from a specific repository instead of Maven Central.
+
+```xml
+<mirrors>...</mirrors>
+```
+
+#### mirror
+
+Defines a single mirror repository Maven should communicate with.
+
+```xml
+<mirror>
+    <id>company-mirror</id>
+    <url>https://repo.example.com/repository/maven-public/</url>
+    <mirrorOf>*</mirrorOf>
+</mirror>
+```
+
+#### mirrorOf
+
+Specifies which repositories should be redirected to the mirror.
+
+`*` means all repositories.
+
+```xml
+<mirrorOf>*</mirrorOf>
+```
+
+#### servers
+
+Container for authentication credentials used when Maven uploads or downloads artifacts.
+
+```xml
+<servers>...</servers>
+```
+
+#### server
+
+Defines login credentials for a specific repository.
+
+The `id` must match the repository ID inside `distributionManagement`.
+
+```xml
+<server>
+    <id>company-releases</id>
+    <username>${env.MAVEN_REPO_USER}</username>
+    <password>${env.MAVEN_REPO_PASSWORD}</password>
+</server>
+```
+
+#### username and password
+
+Credentials Maven uses to authenticate against private repositories.
+
+Production environments usually inject these values through environment variables instead of hardcoding secrets.
+
+```xml
+<username>${env.MAVEN_REPO_USER}</username>
+<password>${env.MAVEN_REPO_PASSWORD}</password>
+```
+
