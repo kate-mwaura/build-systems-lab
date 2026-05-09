@@ -1412,3 +1412,432 @@ When Maven needs a dependency, it follows this order:
 3. Maven Central Repository
 
 Once downloaded, the dependency is cached locally for future builds.
+
+---
+
+# Logging and Configuration
+
+Logging and configuration are what make an application observable and environment-aware. Without them, you are essentially flying blind in production since you have no way of knowing what the application is doing, what went wrong, or how it is behaving across different environments.
+
+In Maven-based Spring Boot projects, logging and configuration are managed through resource files, dependencies, profiles, and environment variables. Getting these right is not just a developer concern it directly affects how systems are monitored, debugged, and deployed in real DevOps workflows.
+
+---
+
+## Logging
+
+### What logging is
+
+Logging is the process of recording application events during runtime. Every time something meaningful happens inside the application a request comes in, a database query runs, an error occurs, logging captures that moment and writes it somewhere useful.
+
+The naive approach is `System.out.println()`. It works locally, but it falls apart completely in production. It has no log levels, no filtering, no timestamps, no way to redirect output to files or centralized systems, and no way to turn it on or off without changing code. Production systems need something structured, controllable, and observable which is exactly what logging frameworks provide.
+
+---
+
+### The logging architecture — SLF4J and Logback
+
+Spring Boot uses a two-layer logging setup. Understanding why this exists matters more than just knowing what the layers are.
+
+**SLF4J (Simple Logging Facade for Java)** is the abstraction layer. Your application code talks to SLF4J — not to any specific logging engine. This means if you ever need to swap the underlying logging implementation, your application code does not need to change at all. SLF4J is the interface. It defines what logging should look like from the code's perspective.
+
+**Logback** is the implementation — the actual engine doing the work. It receives the log events from SLF4J and decides where they go, what format they appear in, and which ones get filtered out based on level. Spring Boot includes Logback by default through `spring-boot-starter-logging`, so most projects do not need to add it manually.
+
+The dependency that wires this together:
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-logging</artifactId>
+</dependency>
+```
+
+If you are already using `spring-boot-starter-web`, this is pulled in automatically as a transitive dependency.
+
+---
+
+### Log levels
+
+Log levels define the severity and purpose of a log message. They also act as filters when you set a level, you only see messages at that level and above.
+
+| Level | When to use it |
+|---|---|
+| TRACE | Extremely detailed internal flow — rarely used outside deep debugging sessions |
+| DEBUG | Diagnostic info for developers. Example: `Variable userId is currently 4821` |
+| INFO | General progress and normal operations. Example: `Theme Park API started on port 8080` |
+| WARN | Something unusual happened but the app is still running. Example: `Database connection slow (2s delay)` |
+| ERROR | A specific action failed. Example: `Could not save Ticket ID #502` |
+| FATAL | The application is dying. Example: `Out of Memory: Shutting down` |
+
+In development, `DEBUG` gives you the full picture. In production, `WARN` or `ERROR` reduces noise and focuses attention on real problems.
+
+---
+
+### Logger implementation in code
+
+This is how logging looks inside a real Spring Boot controller. The logger is tied to the class it lives in, which makes it easy to trace exactly where a log message came from.
+
+```java
+package com.example.greeting.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+public class GreetingController {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(GreetingController.class);
+
+    @GetMapping("/greet")
+    public String greet(@RequestParam(defaultValue = "World") String name) {
+
+        logger.info("Received greeting request for user: {}", name);
+
+        return "Hello, " + name + "!";
+    }
+}
+```
+
+`LoggerFactory.getLogger(GreetingController.class)` creates a logger scoped to this specific class. When the log message appears, it will include the class name, making it easy to locate in large codebases.
+
+---
+
+## Logback configuration
+
+### Where the configuration file lives
+
+Logback behavior is controlled through a configuration file placed in:
+
+```
+src/main/resources/logback.xml
+```
+
+This file is automatically picked up by Spring Boot at startup. It tells Logback where logs should go, what format they should appear in, and which packages should log at which levels.
+
+---
+
+### The three pillars of logback.xml
+
+Every `logback.xml` is built around three core concepts:
+
+**Appenders** define *where* logs go — the console, a file, a remote server, or a cloud shipper like Fluentd.
+
+**Encoders/Layouts** define *what* logs look like — the pattern string that controls what metadata appears on every line.
+
+**Loggers** define *who* logs what — fine-grained control that lets you set `com.myapp` to `DEBUG` while keeping `org.springframework` at `WARN` to reduce framework noise.
+
+---
+
+### logback.xml structure
+
+```xml
+<configuration>
+
+  <property name="LOGS" value="./logs" />
+
+  <!-- Console Appender: logs to terminal, best for local dev and Docker -->
+  <appender name="Console"
+    class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>
+        %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
+      </Pattern>
+    </layout>
+  </appender>
+
+  <!-- RollingFileAppender: writes to disk and rotates files automatically -->
+  <appender name="RollingFile"
+    class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOGS}/spring-boot-logger.log</file>
+    <encoder
+      class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <Pattern>%d %p %C{1.} [%t] %m%n</Pattern>
+    </encoder>
+
+    <!-- Rolls the file daily AND whenever it hits 10MB -->
+    <rollingPolicy
+      class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOGS}/archived/spring-boot-logger-%d{yyyy-MM-dd}.%i.log
+      </fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy
+        class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>10MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+  </appender>
+
+  <!-- Global default: everything at INFO goes to Console -->
+  <root level="info">
+    <appender-ref ref="Console" />
+  </root>
+
+  <!-- Package-specific override: com.plantplaces logs at TRACE level -->
+  <logger name="com.plantplaces" level="trace" additivity="false">
+    <appender-ref ref="RollingFile" />
+    <appender-ref ref="Console" />
+  </logger>
+
+</configuration>
+```
+
+---
+
+### Logback tag breakdown
+
+#### configuration
+
+The root container. Everything lives inside this tag.
+
+```xml
+<configuration>...</configuration>
+```
+
+---
+
+#### appender
+
+Defines where logs are sent. You can have multiple appenders active at the same time — for example, one sending to the console and another writing to a rolling file.
+
+```xml
+<appender name="Console"
+          class="ch.qos.logback.core.ConsoleAppender">
+```
+
+The three most important appender types:
+
+- **ConsoleAppender** → sends logs to `System.out`. Best for local development and Docker containers, because Docker captures stdout and makes it available through `docker logs`.
+- **FileAppender** → writes logs directly to a file. Simple but does not handle file size growth.
+- **RollingFileAppender** → the production-grade option. Automatically creates new log files based on size (e.g. every 10MB) or time (e.g. every day). Prevents the server disk from filling up by archiving and deleting old files based on a retention policy.
+
+---
+
+#### encoder
+
+Defines the format of every log line.
+
+```xml
+<encoder>
+    <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+</encoder>
+```
+
+---
+
+#### pattern — what each token means
+
+The pattern string controls exactly what metadata appears on every log line. Breaking down the standard production pattern:
+
+| Token | What it outputs |
+|---|---|
+| `%d{yyyy-MM-dd HH:mm:ss}` | Timestamp — essential for knowing *when* things broke |
+| `[%thread]` | Which thread ran the code — critical for debugging multi-threaded apps |
+| `%-5level` | The log level (INFO, ERROR, etc.), padded to 5 characters for neat alignment |
+| `%logger{36}` | The class name the log came from |
+| `%msg` | The actual message written in the code |
+| `%n` | Newline |
+
+---
+
+#### root
+
+Sets the global default log level for the entire application.
+
+```xml
+<root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+</root>
+```
+
+---
+
+#### logger
+
+Provides fine-grained control at the package level. This is how you tell Logback to treat your own application code differently from third-party framework code.
+
+```xml
+<logger name="com.plantplaces" level="trace" additivity="false">
+    <appender-ref ref="RollingFile" />
+    <appender-ref ref="Console" />
+</logger>
+```
+
+`additivity="false"` prevents the log event from bubbling up to the root logger and being printed twice.
+
+---
+
+#### ThresholdFilter
+
+Filters logs by level inside a specific appender. Useful when you want a file appender to only capture `WARN` and above, while the console still shows everything.
+
+```xml
+<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+    <level>WARN</level>
+</filter>
+```
+
+---
+
+## Application configuration
+
+### What configuration is
+
+Configuration defines how the application behaves in a given environment. Instead of hardcoding values directly in source code, production applications externalize configuration into files and environment variables. This makes the same codebase deployable across development, testing, and production without changing a single line of code.
+
+Common things that get configured externally:
+- server ports
+- database connection details
+- API keys
+- logging levels
+- active environment profiles
+- external service URLs
+
+---
+
+### application.properties
+
+Spring Boot's primary configuration file lives at:
+
+```
+src/main/resources/application.properties
+```
+
+```properties
+spring.application.name=greeting-service
+
+server.port=9090
+
+logging.level.root=INFO
+
+management.endpoints.web.exposure.include=health,info
+
+spring.profiles.active=dev
+```
+
+---
+
+### Common configuration properties
+
+| Property | Purpose |
+|---|---|
+| `server.port` | Defines the port the application runs on |
+| `logging.level.root` | Sets the global logging level |
+| `spring.application.name` | Names the application — useful in logs and monitoring |
+| `spring.profiles.active` | Activates an environment-specific profile |
+| `management.endpoints.web.exposure.include` | Exposes monitoring endpoints (e.g. health checks) |
+
+---
+
+## Environment-specific configuration with Maven Profiles
+
+You do not want the same configuration running locally and in production. In development, you want `DEBUG` level logs, readable plain text, and the console. In production, you want `WARN` or `ERROR` level logs, `RollingFileAppender` or a log shipper, and JSON format so centralized tools like ELK or Splunk can parse them efficiently.
+
+Maven Profiles let a single project carry different behaviors for each environment without touching the main configuration.
+
+---
+
+### Environment-specific properties files
+
+Spring Boot supports named profile files that activate automatically:
+
+- `application-dev.properties` → development settings
+- `application-test.properties` → test environment settings
+- `application-prod.properties` → production settings
+
+When `spring.profiles.active=prod` is set, Spring Boot loads `application-prod.properties` automatically on top of the base `application.properties`.
+
+---
+
+### Profile structure in pom.xml
+
+```xml
+<profiles>
+  <profile>
+    <id>production</id>
+    <properties>
+      <spring.profiles.active>prod</spring.profiles.active>
+    </properties>
+    <build>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <skipTests>false</skipTests>
+          </configuration>
+        </plugin>
+      </plugins>
+    </build>
+  </profile>
+</profiles>
+```
+
+Activate a profile at build time:
+
+```bash
+mvn clean package -P production
+```
+
+---
+
+### Development vs production logging — a practical comparison
+
+| Concern | Development | Production |
+|---|---|---|
+| Log level | `DEBUG` | `WARN` or `ERROR` |
+| Destination | Console (readable in terminal) | RollingFileAppender or SocketAppender |
+| Format | Plain text (human-readable) | JSON (machine-parseable for ELK/Splunk) |
+| Activation | Default local run | `-P production` or CI/CD pipeline |
+
+---
+
+## Environment variables
+
+Sensitive values like database credentials, API tokens, and passwords must never live inside `pom.xml`, source code, or committed configuration files. Production systems inject these values at runtime through environment variables.
+
+```properties
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PASSWORD}
+```
+
+When the application starts, Spring Boot resolves `${DB_USER}` from the system environment. The actual secret never appears in the repository. This is the foundation of secure configuration management and integrates cleanly with secret management tools used in CI/CD pipelines.
+
+---
+
+## The DevOps "Big Three" logging strategies
+
+Beyond basic setup, production logging in DevOps environments focuses on three operational concerns.
+
+**Log Rotation and Retention** — `RollingFileAppender` automatically rotates log files based on size or time, and deletes old archives based on a retention policy. Without this, logs will eventually fill up a server's disk and crash the application.
+
+**Structured Logging (JSON)** — Plain text logs are readable to humans but difficult for machines to parse at scale. JSON-formatted logs are what ELK (Elasticsearch, Logstash, Kibana), EFK (Elasticsearch, Fluentd, Kibana), and PLG (Promtail, Loki, Grafana) stacks expect. When every log line is a valid JSON object, querying and filtering across millions of events becomes fast and reliable.
+
+**Contextual Logging with MDC (Mapped Diagnostic Context)** — MDC lets you inject values like a `traceId` or `userId` into every single log line produced during a request, without changing every log statement in the codebase. This means you can filter all logs belonging to one specific user's journey through a complex distributed system, which is critical when debugging production issues that involve multiple services.
+
+---
+
+## Log shipping and centralization
+
+In containerized production systems, logs do not just sit on disk. They move through a pipeline from the container to a place where engineers can search, visualize, and alert on them.
+
+Docker containers are designed to log to `stdout`. Docker captures it, and a log shipper collects it and sends it to a centralized platform. The three most common stacks:
+
+- **ELK** → Elasticsearch stores and indexes logs. Logstash processes and transforms them. Kibana provides the visual interface.
+- **EFK** → Replaces Logstash with Fluentd, which is lighter and often preferred in Kubernetes environments.
+- **PLG** → Promtail collects logs. Loki stores them. Grafana visualizes them. Common in teams already using Prometheus for metrics.
+
+---
+
+## Best practices and what to avoid
+
+Log exception stack traces without them, an `ERROR` log tells you something failed but not where or why.
+
+Do not log sensitive data passwords, credit card numbers, tokens, and personally identifiable information must never appear in logs. This is both a security requirement and often a legal one.
+
+Do not over-log logging inside tight loops or on every iteration of a high-frequency process will degrade application performance and produce logs that are impossible to read. Log meaningful events, not noise.
+
+---
+
+## How it all connects
+
+When everything is wired correctly, logging and configuration work together as a system. The `logback.xml` controls what gets logged and where. The `application.properties` and profile files control how the application behaves in each environment. Environment variables keep secrets out of the repository. Maven Profiles activate the right configuration for the right deployment target. And in production, a log shipper moves those logs into a centralized platform where teams can actually observe what the system is doing.
+
