@@ -1847,3 +1847,411 @@ Do not over-log logging inside tight loops or on every iteration of a high-frequ
 
 When everything is wired correctly, logging and configuration work together as a system. The `logback.xml` controls what gets logged and where. The `application.properties` and profile files control how the application behaves in each environment. Environment variables keep secrets out of the repository. Maven Profiles activate the right configuration for the right deployment target. And in production, a log shipper moves those logs into a centralized platform where teams can actually observe what the system is doing.
 
+---
+
+# Maven Multi-Module Projects
+
+## What is a Multi-Module Project?
+
+A multi-module project is a project structure where one application is split into independent sections called modules. Each module handles a specific responsibility of the system while still being part of one larger project.
+
+For example, a payment service should not contain notification logic, and a notification service should not contain shared utility classes. Instead of placing everything inside one huge project, Maven allows applications to be separated into smaller manageable modules.
+
+Each module has its own child `pom.xml` and can build independently, but all modules are controlled by one main parent POM which manages shared configurations, dependency versions, plugins, and build behavior.
+
+A multi-module architecture helps teams avoid dependency conflicts, reduce duplication, and manage large systems cleanly.
+
+---
+
+# Multi-Module Project Structure
+
+```bash
+multi-module-demo/
+│
+├── pom.xml                              # Parent POM
+├── README.md
+│
+├── shared-library/                      # Shared utilities/common models
+│   ├── pom.xml
+│   └── src/main/java/com/example/shared/
+│
+├── payment-service/                     # Payment microservice
+│   ├── pom.xml
+│   ├── Dockerfile
+│   ├── src/main/java/com/example/payment/
+│   └── src/test/java/com/example/payment/
+│
+└── api-gateway/                         # API Gateway
+    ├── pom.xml
+    ├── Dockerfile
+    └── src/main/java/com/example/gateway/
+```
+
+---
+
+# Parent POM
+
+The parent POM is the central controller of the entire multi-module project. It defines all shared resources for the child modules - the properties, dependency management, and plugin management that every module in the project inherits from. It does not contain any application business logic. Its job is purely coordination: making sure every child module is working with the same dependency versions, the same plugin versions, and the same build configuration so there are no version mismatches or inconsistencies across services.
+
+---
+
+## Parent POM Sample
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>multi-module-demo</artifactId>
+    <version>1.0.0</version>
+
+    <packaging>pom</packaging>
+```    
+
+<details>
+  <summary>Click to expand: Full child pom</summary>
+
+```xml
+    <modules>
+        <module>shared-library</module>
+        <module>payment-service</module>
+        <module>notification-service</module>
+        <module>api-gateway</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring.boot.version>3.5.0</spring.boot.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <pluginManagement>
+        <plugins>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+
+            </plugin>
+
+        </plugins>
+    </pluginManagement>
+
+</project>
+```
+</details>
+
+---
+
+# Parent POM Breakdown
+
+### packaging
+
+The parent uses `pom` packaging because it acts as a container project. It does not generate a runnable JAR or WAR file.
+
+```xml
+<packaging>pom</packaging>
+```
+
+---
+
+### modules
+
+The `<modules>` section tells Maven which child projects belong to the parent project.
+
+When Maven builds the parent, it automatically builds all listed modules.
+
+```xml
+<modules>
+    <module>shared-library</module>
+    <module>payment-service</module>
+</modules>
+```
+
+---
+
+### properties
+
+Defines reusable shared variables used across all modules.
+
+```xml
+<properties>
+    <java.version>21</java.version>
+</properties>
+```
+
+---
+
+### dependencyManagement
+
+Defines dependency versions centrally without actually importing them.
+
+Child modules inherit the versions from here to maintain consistency across the system.
+
+```xml
+<dependencyManagement>
+```
+
+---
+
+### pluginManagement
+
+Defines plugin versions and shared plugin configurations for all child modules.
+
+This prevents children from repeatedly redefining the same plugin versions.
+
+```xml
+<pluginManagement>
+```
+
+---
+
+# Child POM
+
+Each module inside the multi-module project has its own child POM.
+
+The child POM contains the actual application-specific configuration required by that module.
+
+Unlike the parent POM, child modules usually:
+- produce actual artifacts
+- contain source code
+- define service-specific dependencies
+- define service-specific plugins
+- define deployment logic
+
+The child inherits shared configurations from the parent to avoid duplication and maintain version consistency.
+
+---
+
+## Child POM Sample
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>multi-module-demo</artifactId>
+        <version>1.0.0</version>
+    </parent>
+```    
+
+<details>
+  <summary>Click to expand: Full child pom</summary>
+
+```xml
+    <artifactId>payment-service</artifactId>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>shared-library</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.45.1</version>
+
+                <configuration>
+                    <images>
+                    <image>
+                      <name>catherine/payment-service:${project.version}</name>
+                        <build>
+                        <from>eclipse-temurin:21-jre-alpine</from>
+                          <assembly>
+                            <descriptorRef>artifact</descriptorRef>
+                          </assembly>
+                          <ports>
+                            <port>8080</port>
+                          </ports>
+                        </build>                    
+                    </image>
+                    </images>
+                </configuration>
+
+                <executions>
+                <execution>
+                  <phase>install</phase>
+                    <goals>
+                       <goal>build</goal>
+                    </goals>
+                </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
+```
+</details>
+---
+
+# Child POM Breakdown
+
+### parent
+
+Connects the child module to the parent POM so it can inherit shared configurations.
+
+```xml
+<parent>
+    <groupId>com.example</groupId>
+    <artifactId>multi-module-demo</artifactId>
+    <version>1.0.0</version>
+</parent>
+```
+
+---
+
+### artifactId
+
+Defines the identity of the module itself.
+
+```xml
+<artifactId>payment-service</artifactId>
+```
+
+---
+
+### dependencies
+
+Contains the libraries specifically needed by this module.
+
+The versions are inherited from the parent `dependencyManagement`.
+
+```xml
+<dependencies>
+```
+
+---
+
+### plugins
+
+Contains plugins needed specifically for this module.
+
+Some plugins may only apply to one service and should not exist globally in the parent.
+
+```xml
+<plugins>
+```
+
+---
+
+### docker-maven-plugin
+
+Builds Docker images directly during the Maven lifecycle.
+
+This plugin belongs in the child module because containers are usually built per service, not globally for the whole parent project.
+
+```xml
+<artifactId>docker-maven-plugin</artifactId>
+```
+
+---
+
+# How Parent and Child POMs Communicate
+
+| Aspect | Parent POM | Child POM |
+|---|---|---|
+| packaging | Uses `pom` packaging because it acts as a container | Usually `jar` or `war` because it produces the actual application |
+| groupId & version | Declared once centrally | Inherited automatically from parent |
+| dependencyManagement | Defines dependency versions | Uses dependencies without redefining versions |
+| pluginManagement | Defines plugin versions/configurations | Uses plugins without repeating configurations |
+| modules | Lists all child modules | Not required in child |
+| parent block | Not needed | Must reference parent |
+| build consistency | Controls shared standards across all modules | Follows parent standards automatically |
+| Docker configuration | Usually not defined globally | Defined per microservice/module |
+| shared resources | Centralized in parent | Consumed by child modules |
+| artifact generation | Does not generate application artifact | Produces runnable services/libraries |
+
+---
+
+# How the Multi-Module System Works Internally
+
+When Maven starts building the parent project, it first reads the `<modules>` section to identify all child projects.
+
+The parent then shares:
+- dependency versions
+- plugin versions
+- shared properties
+- build rules
+
+with all children automatically.
+
+Each child module builds independently but still follows the standards defined by the parent. This prevents dependency conflicts and keeps the entire system stable. The parent acts like the central control room while the children act like independent services working under the same ecosystem rules.
+
+---
+
+# Why Multi-Module Projects Matter
+
+Multi-module projects are heavily used in real production systems because they improve maintainability, scalability, and DevOps operations.
+
+Instead of maintaining one huge monolithic project, teams can split systems into smaller manageable services that still share a controlled ecosystem.
+
+Key benefits include:
+
+| Benefit | Explanation |
+|---|---|
+| Reusability | Shared libraries can be reused across multiple services |
+| Version consistency | Parent POM ensures all modules use the same dependency versions |
+| Reduced conflicts | Centralized management prevents dependency and plugin mismatch |
+| Cleaner architecture | Services stay isolated and easier to maintain |
+| Faster teamwork | Teams can work on independent modules simultaneously |
+| Easier CI/CD | Pipelines can build and deploy services independently |
+| Better scalability | Services can scale individually without affecting the entire system |
+| Cleaner builds | Parent centralizes build logic and plugin configuration |
+| Storage optimization | Shared dependencies reduce duplication across modules |
+| Easier debugging | Problems become easier to isolate per module |
+| Better Dockerization | Each service can build and ship its own container image |
+| Enterprise-ready structure | Common architecture used in large production systems |
