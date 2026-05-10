@@ -233,7 +233,11 @@ In a DevOps workflow, this file directly connects:
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.0.5</version>
     </parent>
+```
+<details>
+  <summary>Click to expand: Full pom.xml</summary>
 
+```xml
     <!-- ===================== -->
     <!-- Properties (Centralized Values) -->
     <!-- ===================== -->
@@ -367,6 +371,8 @@ In a DevOps workflow, this file directly connects:
 
 </project>
 ```
+
+</details>
 
 ---
 
