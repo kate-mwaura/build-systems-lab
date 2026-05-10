@@ -2255,3 +2255,230 @@ Key benefits include:
 | Easier debugging | Problems become easier to isolate per module |
 | Better Dockerization | Each service can build and ship its own container image |
 | Enterprise-ready structure | Common architecture used in large production systems |
+
+---
+
+## Docker Integration
+
+Docker integration allows Maven applications to be packaged into lightweight, portable containers that can run consistently across different environments. Instead of deploying only the JAR file and manually configuring Java on every server, Docker packages both the application and its runtime environment into a single image.
+
+This solves one of the biggest DevOps problems:
+
+> “It works on my machine but fails in production.”
+
+Containerization ensures the same application behaves consistently regardless of where it runs — locally, in a CI/CD pipeline, on a testing server, or in a Kubernetes cluster in the cloud. For Java applications, Docker packages the compiled JAR, the Java runtime, environment configuration, and startup commands into a single image. This makes deployments faster, reproducible, and straightforward to scale.
+
+---
+
+## Why Containerize Maven Applications
+
+A Maven build produces the application artifact, usually a JAR or WAR file. Docker takes that artifact and packages it into a runnable container image.
+
+This provides several production advantages.
+
+The application becomes portable because the image already contains the required Java runtime environment. Teams no longer need to manually install Java or configure environments differently across servers.
+
+Container images are also lightweight and fast to deploy. Modern orchestration systems like Kubernetes can quickly start or replace containers during scaling or recovery operations.
+
+In CI/CD pipelines, Docker images become deployable artifacts. Instead of rebuilding the application repeatedly across environments, teams build once and deploy the same image everywhere.
+
+---
+
+## Docker Build Flow in CI/CD
+
+In production DevOps workflows, Docker usually integrates directly into the CI/CD pipeline.
+
+The flow normally works like this:
+
+Developer pushes code to GitHub. Jenkins or GitHub Actions pulls the repository and starts the Maven build process. Docker then builds an image containing the packaged application.
+
+After the image is built, automated tests can run against a temporary container created from that image. If the tests pass, the image is pushed to a container registry such as:
+- Docker Hub
+- AWS ECR
+- Nexus
+- Artifactory
+
+Deployment systems then pull the same image into production environments.
+
+This creates immutable deployments because the exact same image tested in CI is the one deployed to production.
+
+---
+
+## Multi-Stage Docker Builds
+
+Modern Maven applications usually use multi-stage Docker builds.
+
+A multi-stage build separates the Dockerfile into two environments:
+
+- build environment
+- runtime environment
+
+The build stage contains Maven and the full JDK required to compile the application. The runtime stage contains only the lightweight JRE needed to run the final application.
+
+This keeps production containers smaller, cleaner, and more secure.
+
+---
+
+## Multi-Stage Dockerfile Example
+
+```dockerfile
+# ---------------- BUILD STAGE ----------------
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+WORKDIR /build
+# Copy pom.xml first for dependency caching
+COPY pom.xml .
+# Download dependencies
+RUN mvn dependency:go-offline
+# Copy source code
+COPY src ./src
+# Build application
+RUN mvn clean package -DskipTests
+
+# ---------------- RUNTIME STAGE ----------------
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+# Copy final artifact from builder stage
+COPY --from=builder /build/target/*.jar app.jar
+# Application port
+EXPOSE 8080
+# Start application
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+---
+
+## Dockerfile Breakdown
+
+### FROM
+
+Defines the base image used for each stage.
+
+The first stage uses a Maven image because the application needs Maven and the JDK to compile the project.
+
+The second stage uses a lightweight JRE image because production containers only need to run the application.
+
+```dockerfile
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+```
+
+```dockerfile
+FROM eclipse-temurin:17-jre-alpine
+```
+
+---
+
+### WORKDIR
+
+Defines the working directory inside the container. Every command after this executes relative to that location.
+
+```dockerfile
+WORKDIR /build
+```
+
+---
+
+### COPY
+
+Copies files from the local project into the container filesystem. Docker layers are heavily optimized around COPY instructions.
+
+```dockerfile
+COPY pom.xml .
+```
+
+```dockerfile
+COPY src ./src
+```
+
+---
+
+### RUN
+
+Executes commands during the image build process. In Maven projects this is typically where dependencies get downloaded, code gets compiled, and the artifact gets packaged.
+
+
+```dockerfile
+RUN mvn clean package -DskipTests
+```
+
+---
+
+### dependency:go-offline
+
+Downloads dependencies before source code is copied. If only Java code changes but the `pom.xml` remains unchanged, Docker reuses the cached dependency layer instead of downloading dependencies again.
+
+```dockerfile
+RUN mvn dependency:go-offline
+```
+
+This significantly speeds up rebuilds in CI/CD pipelines.
+
+---
+
+### COPY --from
+
+Copies artifacts between Docker stages. Instead of transferring the entire Maven project into production, only the final JAR file is copied into the runtime container.
+
+```dockerfile
+COPY --from=builder /build/target/*.jar app.jar
+```
+
+This keeps production images minimal.
+
+---
+
+### EXPOSE
+
+Documents the application port used by the container.
+
+```dockerfile
+EXPOSE 8080
+```
+
+---
+
+### ENTRYPOINT
+
+Defines the command executed when the container starts.
+
+```dockerfile
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+This becomes the container startup process.
+
+---
+
+## Why Multi-Stage Builds Matter
+
+Multi-stage Docker builds matter in production because the final image only contains what the application actually needs to run the JAR and the Java runtime. Everything else, the Maven installation, source code, build tools, and caches, stays behind in the builder stage. This keeps the image small, reduces startup time, and shrinks the attack surface because there is no build tooling or raw source code sitting inside the production container for anyone to access.
+
+---
+
+## Docker Caching and Maven Optimization
+
+One of the most important optimizations in Maven Docker builds is copying the `pom.xml` before the source code.
+
+```dockerfile
+COPY pom.xml .
+RUN mvn dependency:go-offline
+```
+
+Docker caches this layer separately. If developers only modify Java source code, Docker does not re-download all dependencies again. It only recompiles the application. Without this optimization, every rebuild would repeatedly download hundreds of megabytes of dependencies, slowing CI/CD pipelines significantly.
+
+---
+
+## How Maven and Docker Work Together
+
+Maven and Docker solve different parts of the deployment lifecycle. Maven handles the build side — managing dependencies, compiling code, running tests, and packaging the application into a JAR. Docker takes it from there, packaging that JAR into a container image that runs consistently regardless of the environment it lands in. One builds the artifact, the other deploys it.
+
+In production systems the relationship usually looks like this:
+
+| Layer | Responsibility |
+|---|---|
+| Maven | Build the application |
+| Docker | Package the runtime environment |
+| Registry | Store container images |
+| Kubernetes/Docker Compose | Run containers |
+| CI/CD Pipeline | Automate build and deployment |
+
+Together, Maven and Docker create a reproducible deployment pipeline where applications can move from development to production with minimal environmental differences.
