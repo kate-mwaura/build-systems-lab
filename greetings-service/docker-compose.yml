@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  greeting-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: greeting-api
+    ports:
+      - "9080:9080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # Here is how you tell the app where the sonar server is
+      - SONAR_HOST_URL=http://sonarqube:9000
+    volumes:
+      - greeting-logs:/app/logs
+    networks:
+      - greetings-net
+    restart: unless-stopped
+
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - greetings-net
+    restart: unless-stopped
+
+  snyk:
+    image: snyk/snyk:maven
+    container_name: snyk
+    # We mount the local folder and the docker socket so it can scan both
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SNYK_TOKEN=2ed37f18-f428-4f06-83a1-3830414e69a4
+    working_dir: /app
+    networks:
+      - greetings-net
+    # This keeps the container alive so you can "exec" into it
+    entrypoint: ["tail", "-f", "/dev/null"]
+
+networks:
+  greetings-net:
+    driver: bridge
+
+volumes:
+  greeting-logs:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

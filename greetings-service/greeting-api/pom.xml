@@ -1,0 +1,122 @@
+<!-- CHILD POM : greeting-service/greeting-api/pom.xml -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Inherit from parent, not Spring Boot directly -->
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>greeting-service</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <!-- Child's own identity -->
+    <artifactId>greeting-api</artifactId>
+    <name>greeting-api</name>
+    <description>Simple Spring Boot greeting microservice</description>
+
+    <!-- Only what is specific to this module, java version and encoding already in parent -->
+    <properties>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
+    </properties>
+
+    <!-- No versions needed here, all managed by parent's dependencyManagement via Spring Boot BOM -->
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- No version needed, locked in parent pluginManagement -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+	<executions>
+		<execution>
+            	 <goals>
+                   <goal>repackage</goal>
+            	</goals>
+        	</execution>
+	</executions>
+            </plugin>
+
+            <!-- No version needed, locked in parent pluginManagement -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+ <!-- Environment Profiles -->
+<profiles>
+    <profile>
+        <id>dev</id>
+        <properties>
+            <spring.profiles.active>dev</spring.profiles.active>
+            <app.environment>development</app.environment>
+        </properties>
+        <activation>
+            <activeByDefault>true</activeByDefault>
+        </activation>
+    </profile>
+    <profile>
+        <id>prod</id>
+        <properties>
+            <spring.profiles.active>prod</spring.profiles.active>
+            <app.environment>production</app.environment>
+        </properties>
+    </profile>
+</profiles>
+
+</project>
+
+<!--squ_ee6b75f71423a7696a857cd49d03010bffc5f1a2-->

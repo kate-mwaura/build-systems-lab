@@ -1,0 +1,5 @@
+2026-05-14 08:12:31 [main] INFO  c.e.greeting.GreetingApplication - Starting GreetingApplication using Java 21.0.10 with PID 3998 (/home/katemwaura/greetings-service/greeting-api/target/classes started by katemwaura in /home/katemwaura/greetings-service/greeting-api)
+2026-05-14 08:12:31 [main] INFO  c.e.greeting.GreetingApplication - The following 1 profile is active: "prod"
+2026-05-14 08:12:31 [main] INFO  c.e.greeting.GreetingApplication - Started GreetingApplication in 1.178 seconds (process running for 3.972)
+2026-05-14 08:13:14 [http-nio-9080-exec-1] INFO  c.e.g.controller.GreetingController - Processing greeting request for: World
+2026-05-14 08:13:24 [http-nio-9080-exec-3] INFO  c.e.g.controller.GreetingController - Processing greeting request for: thony
