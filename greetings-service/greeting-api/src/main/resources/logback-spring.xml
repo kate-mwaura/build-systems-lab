@@ -42,7 +42,7 @@
 
         <!-- Only ship WARN and above to file in prod -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>WARN</level>
         </filter>
     </appender>
 

@@ -39,7 +39,7 @@ services:
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SNYK_TOKEN=2ed37f18-f428-4f06-83a1-3830414e69a4
+      - SNYK_TOKEN=${SNYK_TOKEN}
     working_dir: /app
     networks:
       - greetings-net
