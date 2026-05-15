@@ -52,8 +52,7 @@ docker compose version
 git --version
 ```
 
-> 📸 **Screenshot:** [01-01-prerequisites-versions] Run all five commands above in your terminal.
-> Show: version output for each tool confirming they are installed and available.
+![Prerequisites versions](images/01-01-prerequisites-versions.png)
 
 Clone the repository and move into the project root:
 
@@ -131,11 +130,9 @@ Verify the artifact was created:
 ls greeting-api/target/
 ```
 
-> 📸 **Screenshot:** [03-01-mvn-clean-package] Run `mvn clean package` from the project root.
-> Show: Reactor Build Order, test execution, BUILD SUCCESS, total build time, and the reactor summary showing both modules succeeding.
+![Maven clean package](images/03-01-mvn-clean-package.png)g.
 
-> 📸 **Screenshot:** [03-02-target-artifact] Run `ls greeting-api/target/`.
-> Show: the generated `greeting-api-1.0-SNAPSHOT.jar` file in the output.
+![Target artifact](images/03-02-target-artifact.png)
 
 ---
 
@@ -175,11 +172,9 @@ greeting-api/target/site/jacoco/index.html
 
 Open it in a browser to see a full breakdown of which classes, methods, and lines were covered.
 
-> 📸 **Screenshot:** [04-01-jacoco-verify] Run `mvn clean verify` and show the JaCoCo check output.
-> Show: `[INFO] All coverage checks have been met.` and the Tests run summary with 0 failures.
+![JaCoCo verify](images/04-01-jacoco-verify.png)
 
-> 📸 **Screenshot:** [04-02-jacoco-report] Open `greeting-api/target/site/jacoco/index.html` in a browser.
-> Show: the coverage report dashboard — overall instruction coverage percentage, class-level breakdown, and the highlighted covered/missed lines.
+![JaCoCo report](images/04-02-jacoco-report.png)
 
 ---
 
@@ -249,11 +244,9 @@ greeting-api/logs/greeting-api.log
 | App log level | DEBUG | INFO |
 | Framework log level | INFO | WARN |
 
-> 📸 **Screenshot:** [05-01-spring-boot-run-dev] Run `mvn spring-boot:run` and show the startup output.
-> Show: active profile (`dev`), Tomcat port 9090, started successfully, and the curl response `Hello, Kate!`.
+![Spring Boot run dev](images/05-01-spring-boot-run-dev.png)
 
-> 📸 **Screenshot:** [05-02-spring-boot-run-prod] Run `mvn spring-boot:run -Dspring-boot.run.profiles=prod`.
-> Show: active profile (`prod`), Tomcat port 9080, and then `cat logs/greeting-api.log` showing log entries written to file.
+![Spring Boot run prod](images/05-02-spring-boot-run-prod.png)
 
 ---
 
@@ -316,11 +309,9 @@ Verify the image was created:
 docker images
 ```
 
-> 📸 **Screenshot:** [07-01-docker-build] Run `docker build -t greeting-api:latest .` from the project root.
-> Show: both build stages executing, Maven packaging output, BUILD SUCCESS inside the container, and the final image creation line.
+![Docker build](images/07-01-docker-build.png)
 
-> 📸 **Screenshot:** [07-02-docker-images] Run `docker images`.
-> Show: `greeting-api:latest` in the list with its size — notice how much smaller it is compared to the Maven build image.
+![Docker images](images/07-02-docker-images.png)
 
 ---
 
@@ -339,11 +330,11 @@ The prod profile activates automatically the `ENTRYPOINT` in the Dockerfile pass
 Test the endpoint:
 
 ```bash
-curl "http://localhost:9080/greet?name=Kate"
+curl "http://localhost:9080/greet?name=Thony"
 ```
 
 ```text
-Hello, Kate!
+Hello, Thony!
 ```
 
 ### Inspecting the Running Container
@@ -373,14 +364,9 @@ ls -la /app
 └── app.jar
 ```
 
-> 📸 **Screenshot:** [08-01-docker-run] Run `docker run -p 9080:9080 greeting-api:latest`.
-> Show: Spring Boot startup banner, active profile (`prod`), Tomcat started on port 9080.
+![Docker run](images/08-01-docker-run.png)
 
-> 📸 **Screenshot:** [08-02-curl-response] Run `curl "http://localhost:9080/greet?name=Kate"`.
-> Show: `Hello, Kate!` response.
-
-> 📸 **Screenshot:** [08-03-docker-exec] Run `docker ps` then `docker exec -it <container-id> sh` and `ls -la /app`.
-> Show: the container running, the `/app` directory with `app.jar` and the `logs/` folder.
+![Docker exec](images/08-03-docker-exec.png)
 
 ---
 
@@ -427,8 +413,7 @@ Archived logs are compressed and stored at:
 
 A 30-day retention policy and a 1GB total size cap prevent the container disk from filling up over time. In a real deployment, the `/app/logs/` directory would be mounted as an external Docker volume so logs survive container restarts and can be consumed by a log shipper like Fluentd or Promtail.
 
-> 📸 **Screenshot:** [09-01-container-logs] Run the curl commands then `docker exec <container-id> cat app/logs/greeting-api.log`.
-> Show: the log file with timestamped request entries, thread names, log levels, and class names visible.
+![Container logs](images/09-01-container-logs.png)
 
 ---
 
@@ -477,11 +462,9 @@ This removes the containers and the network. Volumes persist unless you add `-v`
 > 📸 **Screenshot:** [10-01-compose-up] Run `docker compose up --build`.
 > Show: image build stage, all three containers starting, the Compose network being created, and log output streaming from multiple services.
 
-> 📸 **Screenshot:** [10-02-compose-ps] Run `docker ps` after Compose is up.
-> Show: all three containers running — `greeting-api`, `sonarqube`, and `snyk`.
+> 📸 **Screenshot:** [10-02-compose-ps] — image pending.
 
-> 📸 **Screenshot:** [10-03-sonarqube-up] Open `http://localhost:9000` in a browser.
-> Show: the SonarQube login page confirming it is running.
+![SonarQube up](images/10-03-sonarqube-up.png)
 
 ---
 
@@ -531,14 +514,11 @@ The dashboard shows:
 
 A green quality gate means the project meets the defined thresholds. A red gate means something needs to be fixed before the code would be allowed to ship in a real CI/CD pipeline.
 
-> 📸 **Screenshot:** [11-01-sonar-analysis] Run the `mvn clean verify sonar:sonar` command.
-> Show: Maven lifecycle running, JaCoCo report generation, and the final SonarQube analysis completion line with the dashboard URL.
+![Sonar analysis](images/11-01-sonar-analysis.png)
 
-> 📸 **Screenshot:** [11-02-sonar-dashboard] Open `http://localhost:9000` and navigate to the project dashboard.
-> Show: the full SonarQube dashboard — quality gate status, coverage percentage, code smells count, reliability and security ratings.
+![Sonar dashboard](images/11-02-sonar-dashboard.png)
 
-> 📸 **Screenshot:** [11-03-sonar-coverage] Click into the Coverage section.
-> Show: the detailed coverage breakdown linked from the JaCoCo report.
+![Sonar coverage](images/11-03-sonar-coverage.png)
 
 ---
 
@@ -582,11 +562,9 @@ In a CI/CD pipeline, Snyk can be configured to fail the build if any High or Cri
 > SNYK_TOKEN=your_token_here
 > ```
 
-> 📸 **Screenshot:** [12-01-snyk-test] Run `docker compose run snyk snyk test --all-projects`.
-> Show: the dependency tree being scanned, vulnerability summary output, and severity breakdown.
+![Snyk test](images/12-01-snyk-test.png)
 
-> 📸 **Screenshot:** [12-02-snyk-container] Run `docker compose run snyk snyk container test greeting-api:latest`.
-> Show: the image scan output with any flagged vulnerabilities or a clean result.
+![Snyk container](images/12-02-snyk-container.png)
 
 ---
 
