@@ -53,6 +53,7 @@ git --version
 ```
 
 ![Prerequisites versions](images/01-01-prerequisites-versions.png)
+*All five tools confirmed and available — Java 21.0.10, Maven 3.9.14, Docker 29.1.3, Docker Compose v2.39.2, and Git 2.43.0 running on the machine before the build starts.*
 
 Clone the repository and move into the project root:
 
@@ -130,9 +131,13 @@ Verify the artifact was created:
 ls greeting-api/target/
 ```
 
-![Maven clean package](images/03-01-mvn-clean-package.png)g.
 
+![Maven clean package](images/03-01-mvn-clean-package.png)
+*Maven processed both modules in sequence. JaCoCo generated the coverage report, the Spring Boot plugin repackaged the thin JAR into a fat JAR with nested dependencies in BOOT-INF, and both the parent and child completed with BUILD SUCCESS in 38.5 seconds.*
+
+---
 ![Target artifact](images/03-02-target-artifact.png)
+*The `target/` directory confirms the fat JAR was produced — `greeting-api-1.0-SNAPSHOT.jar` is the executable artifact and `greeting-api-1.0-SNAPSHOT.jar.original` is the original thin JAR before repackaging.*
 
 ---
 
@@ -172,9 +177,15 @@ greeting-api/target/site/jacoco/index.html
 
 Open it in a browser to see a full breakdown of which classes, methods, and lines were covered.
 
+---
+
 ![JaCoCo verify](images/04-01-jacoco-verify.png)
+*3 tests ran with 0 failures. JaCoCo loaded the execution data, analyzed the bundle, and confirmed all coverage checks were met — the 80% instruction coverage gate passed and the build completed successfully.*
+
+---
 
 ![JaCoCo report](images/04-02-jacoco-report.png)
+*The JaCoCo HTML report showing overall instruction coverage at 100% for `com.example.greeting` and the controller, with a class-level breakdown of missed instructions, branches, lines, methods, and classes across the two analyzed files.*
 
 ---
 
@@ -245,8 +256,12 @@ greeting-api/logs/greeting-api.log
 | Framework log level | INFO | WARN |
 
 ![Spring Boot run dev](images/05-01-spring-boot-run-dev.png)
+*The application started on port 9090 with the dev profile active, logging at DEBUG level to the console. Three curl requests confirmed the endpoint is responding correctly — `Hello, World!`, `Hello, Kate!`, and `Hello, Thony!` all returned as expected.*
+
+---
 
 ![Spring Boot run prod](images/05-02-spring-boot-run-prod.png)
+*The prod profile activated on port 9080 with no DEBUG output on the console. The `cat app/logs/greeting-api.log` confirms logs are being written to file — startup events and all four greeting requests are captured with timestamps, thread names, and INFO level entries from the GreetingController.*
 
 ---
 
@@ -310,8 +325,12 @@ docker images
 ```
 
 ![Docker build](images/07-01-docker-build.png)
+*Both build stages executed in sequence — Stage 1 used the Maven image to copy the POMs, download dependencies offline, copy source, and run the package. Stage 2 copied only the final JAR into the lightweight JRE Alpine image and created the logs directory. The image was written and named `greeting-api:latest` in 311.9 seconds.*
+
+---
 
 ![Docker images](images/07-02-docker-images.png)
+*`greeting-api:latest` sits at 229MB — significantly smaller than the Maven build image because the final runtime image carries only the JRE and the packaged JAR. The build tooling, JDK, and Maven are not included in what gets deployed.*
 
 ---
 
@@ -365,8 +384,12 @@ ls -la /app
 ```
 
 ![Docker run](images/08-01-docker-run.png)
+*The container started on port 9080 with the prod profile active — the Spring Boot banner confirms the application came up inside the container. A curl request from the host machine returned `Hello, Thony!` confirming the port mapping is working and the endpoint is reachable from outside the container.*
+
+---
 
 ![Docker exec](images/08-03-docker-exec.png)
+*`docker ps` confirms the container is up and running with port `9080` correctly mapped. Dropping into the container with `docker exec` and running `tree` shows the full runtime filesystem — just `app.jar` and `app/logs/greeting-api.log`. No build tools, no source code, nothing extra. Exactly what a production runtime image should contain.*
 
 ---
 
@@ -414,6 +437,7 @@ Archived logs are compressed and stored at:
 A 30-day retention policy and a 1GB total size cap prevent the container disk from filling up over time. In a real deployment, the `/app/logs/` directory would be mounted as an external Docker volume so logs survive container restarts and can be consumed by a log shipper like Fluentd or Promtail.
 
 ![Container logs](images/09-01-container-logs.png)
+*The log file inside the container captures every request with full context — timestamp, thread name, log level, and the fully qualified class name. The prod profile is confirmed active in the startup entry, and each greeting request is recorded at INFO level exactly as configured in `logback-spring.xml`.*
 
 ---
 
@@ -459,12 +483,13 @@ docker compose down
 
 This removes the containers and the network. Volumes persist unless you add `-v`.
 
-> 📸 **Screenshot:** [10-01-compose-up] Run `docker compose up --build`.
-> Show: image build stage, all three containers starting, the Compose network being created, and log output streaming from multiple services.
+![Compose up](images/10-01-compose-up.png)
+*Docker Compose built the `greeting-api` image using cached layers, then started all three containers — `greeting-api`, `snyk`, and `sonarqube` — all showing `Started` and confirmed live. `docker compose ps` shows all three containers up for 4 minutes with ports correctly mapped — `greeting-api` on `9080` and `sonarqube` on `9000`.*
 
-> 📸 **Screenshot:** [10-02-compose-ps] — image pending.
+---
 
 ![SonarQube up](images/10-03-sonarqube-up.png)
+*SonarQube is fully started and reachable at `http://localhost:9000`. The login page confirms the service is running inside the Compose network and accessible from the host machine on the mapped port.*
 
 ---
 
@@ -515,10 +540,17 @@ The dashboard shows:
 A green quality gate means the project meets the defined thresholds. A red gate means something needs to be fixed before the code would be allowed to ship in a real CI/CD pipeline.
 
 ![Sonar analysis](images/11-01-sonar-analysis.png)
+*The analysis completed successfully in 3 minutes 11 seconds. SonarQube confirmed `ANALYSIS SUCCESSFUL` and provided the direct dashboard URL. Both modules show SUCCESS in the Reactor Summary, confirming the full build, test, coverage, and analysis pipeline ran cleanly end to end.*
+
+---
 
 ![Sonar dashboard](images/11-02-sonar-dashboard.png)
+*The SonarQube dashboard shows the quality gate passed with all conditions met — 0 bugs, 0 vulnerabilities, 0 security hotspots, 1 code smell with 10 minutes of estimated debt, 91.7% coverage on 10 lines to cover, and 0.0% duplication across 189 lines. Reliability, Security, and Maintainability all rated A.*
+
+---
 
 ![Sonar coverage](images/11-03-sonar-coverage.png)
+*The Coverage breakdown shows 91.7% overall instruction coverage across 2 files. `GreetingController.java` sits at 88.9% with 1 uncovered condition, while `GreetingApplication.java` reaches 100% line coverage. The data is sourced directly from the JaCoCo report generated during the `verify` phase.*
 
 ---
 
@@ -563,8 +595,12 @@ In a CI/CD pipeline, Snyk can be configured to fail the build if any High or Cri
 > ```
 
 ![Snyk test](images/12-01-snyk-test.png)
+*Snyk scanned 3 projects across the Maven dependency tree. The parent POM at `/app` came back clean with no vulnerable paths found. The `greeting-api` module returned 7 issues across 52 dependencies — all Medium severity, introduced through the embedded Tomcat via `spring-boot-starter-web`, with fixes available in newer versions.*
+
+---
 
 ![Snyk container](images/12-02-snyk-container.png)
+*Snyk scanned the `greeting-api:latest` container image targeting both the Maven project at `/app` and the JDK at `/opt/java/openjdk/lib`. The image itself came back with no vulnerable paths found. The Maven project scan flagged 2 vulnerable paths consistent with the dependency scan results above.*
 
 ---
 
