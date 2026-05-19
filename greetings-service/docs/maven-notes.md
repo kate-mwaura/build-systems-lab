@@ -1,160 +1,28 @@
-# Maven Notes — Table of Contents
+# Maven Notes
 
-> Your Google Map for this doc. 10 sections · ~70 KB of build knowledge.
-> Click any section to expand it.
-
----
-
-<details>
-<summary><strong>01 · Introduction &amp; What is Maven</strong></summary>
-
-<br>
-
-- **Why Maven exists** — the build chaos it replaced and the problem it solves
-- **Where it fits in DevOps** — compile → test → package → deploy
-- **What this doc covers** — your reading roadmap
-
-</details>
+> Personal reference document — Maven in a DevOps context.
 
 ---
 
-<details>
-<summary><strong>02 · Project Structure</strong></summary>
+## Table of Contents
 
-<br>
-
-- **Standard directory layout** — where source, tests, and resources live
-- **Convention over configuration** — why following the structure matters
-- **What breaks when you deviate** — tests not found, missing classes, broken artifacts
-
-</details>
-
----
-
-<details>
-<summary><strong>03 · pom.xml — Heart of Maven</strong></summary>
-
-<br>
-
-- **GAV (groupId · artifactId · version)** — project identity
-- **packaging · name · description** — JAR vs WAR and metadata
-- **parent block** — inheriting Spring Boot defaults
-- **properties** — reusable variables (Java version, encoding)
-
-</details>
+- [01 · Introduction](#01--introduction)
+- [02 · What is Maven](#02--what-is-maven)
+- [03 · Maven Project Structure](#03--maven-project-structure)
+- [04 · pom.xml — Heart of Maven](#04--pomxml--heart-of-maven)
+- [05 · Dependencies & Dependency Management](#05--dependencies--dependency-management)
+- [06 · Plugins, Lifecycle & Distribution](#06--plugins-lifecycle--distribution)
+- [07 · settings.xml & Maven Profiles](#07--settingsxml--maven-profiles)
+- [08 · Maven Repositories](#08--maven-repositories)
+- [09 · Logging & Application Configuration](#09--logging--application-configuration)
+- [10 · Multi-Module Projects](#10--multi-module-projects)
+- [11 · Docker Integration](#11--docker-integration)
 
 ---
 
-<details>
-<summary><strong>04 · Dependencies &amp; Dependency Management</strong></summary>
+## 01 · Introduction
 
-<br>
-
-- **Direct vs transitive** — what you declare vs what Maven pulls in automatically
-- **Scope** — compile · test · provided · runtime · import
-- **exclusions** — removing unwanted transitive dependencies
-- **BOM (Bill of Materials)** — centralized version control, Spring Boot BOM
-- **Conflict resolution** — nearest definition wins + best practices
-
-</details>
-
----
-
-<details>
-<summary><strong>05 · Plugins, Lifecycle &amp; Distribution</strong></summary>
-
-<br>
-
-- **Plugins as the execution layer** — compile, test, package, report
-- **Phases vs goals** — when things run vs what they do
-- **Common plugin table** — compiler · surefire · jacoco · spring-boot
-- **pluginManagement** — centralizing plugin versions in parent POMs
-- **distributionManagement** — pushing artifacts to Nexus / Artifactory
-
-</details>
-
----
-
-<details>
-<summary><strong>06 · settings.xml &amp; Maven Profiles</strong></summary>
-
-<br>
-
-- **settings.xml vs pom.xml** — machine config vs project config
-- **mirrors & servers** — routing + authentication for private repositories
-- **Maven profiles** — dev · test · staging · production
-- **Activating profiles** — `mvn clean package -P production`
-
-</details>
-
----
-
-<details>
-<summary><strong>07 · Maven Repositories</strong></summary>
-
-<br>
-
-- **Local repository** — the `.m2` cache, how Maven reuses downloaded dependencies
-- **Maven Central** — the default public source for open-source Java libraries
-- **Remote repositories** — Nexus, Artifactory, GitHub Packages, AWS CodeArtifact
-- **Resolution order** — local → remote → Central, cached after first download
-
-</details>
-
----
-
-<details>
-<summary><strong>08 · Logging &amp; Application Configuration</strong></summary>
-
-<br>
-
-- **SLF4J + Logback architecture** — abstraction layer vs implementation engine
-- **Log levels** — TRACE · DEBUG · INFO · WARN · ERROR · FATAL
-- **logback.xml** — appenders, encoders, pattern tokens, root logger
-- **application.properties** — port, profile, endpoints, environment variables
-- **Dev vs prod logging** — console plain text vs JSON for ELK / Grafana
-- **Log shipping stacks** — ELK · EFK · PLG (Promtail + Loki + Grafana)
-
-</details>
-
----
-
-<details>
-<summary><strong>09 · Multi-Module Projects</strong></summary>
-
-<br>
-
-- **What is a multi-module project** — splitting one app into independent, focused modules
-- **Parent POM as coordinator** — shared dependencies, plugins, and properties across all modules
-- **Child POMs** — service-specific logic that inherits from the parent
-- **How the system works internally** — build order, version consistency, conflict prevention
-- **Why multi-module matters** — reusability, cleaner architecture, faster teamwork, easier CI/CD
-
-</details>
-
----
-
-<details>
-<summary><strong>10 · Docker Integration</strong></summary>
-
-<br>
-
-- **Why containerize Maven applications** — solving "works on my machine" once and for all
-- **Docker build flow in CI/CD** — code push → Maven build → image build → registry → deploy
-- **Multi-stage Dockerfile** — builder stage (JDK + Maven) → runtime stage (JRE only)
-- **Dockerfile breakdown** — FROM · WORKDIR · COPY · RUN · EXPOSE · ENTRYPOINT
-- **Docker caching** — copy `pom.xml` first, run `dependency:go-offline` to skip re-downloads
-- **Maven + Docker working together** — build once, deploy the same image everywhere
-
-</details>
-
----
-
-> 💡 **Recruiter tip:** Sections 03–05 are the Maven core. Sections 08 & 10 show real DevOps integration depth.
-
-#  Introduction
-
-## Why Maven matters in DevOps
+### 1.1 Why Maven matters in DevOps
 
 Maven is a build automation and dependency management tool for Java applications. In a DevOps workflow, it is responsible for turning source code into reproducible, deployable artifacts. It handles dependency resolution, compiles `.java` source into JVM bytecode, executes test suites, and packages the application into a versioned artifact (JAR/WAR).
 
@@ -162,13 +30,12 @@ Maven is typically integrated into CI/CD pipelines to enforce consistent builds,
 
 ---
 
-## What I aimed to learn
+### 1.2 What I aimed to learn
 
 My goal in learning Maven was to understand the full build lifecycle — from raw `.java` source code to a packaged artifact ready for deployment. I focused on how Maven manages dependencies, executes builds through defined lifecycles, enforces code quality, and integrates testing and security tools to produce reliable, production-grade builds.
 
----
 
-## What this document covers
+### 1.3 What this document covers
 
 This document captures my hands-on experience working with Maven in a DevOps context. It covers core concepts such as project structure, dependency management, build lifecycles, plugins, and integrations with tools like SonarQube, JaCoCo, Snyk, and Docker.
 
@@ -176,43 +43,43 @@ The goal is to provide a practical reference that reflects both conceptual under
 
 ---
 
-#  What is Maven
+## 02 · What is Maven
 
-## Definition
+### 2.1 Definition
 
 Maven is an Apache open-source build automation and dependency management tool used primarily for Java applications. It provides a standardized way to define how a project is built, tested, and packaged into a deployable artifact.
 
 ---
 
-## Why Maven exists (Problem it solves)
+### 2.2 Why Maven exists (Problem it solves)
 
 Before tools like Maven, building Java applications was inconsistent and manual. Developers had to manage dependencies, compilation, testing, and packaging individually, which often led to broken builds and environment-specific issues.
 
 Maven solves this by:
-- providing a consistent way to build projects  
-- handling dependencies automatically  
-- enforcing a standard project structure   
+- providing a consistent way to build projects
+- handling dependencies automatically
+- enforcing a standard project structure
 - enabling reproducible builds across environments [ensuring builds work the same across different environments]
 
 ---
 
-## Where Maven fits in a DevOps workflow
+### 2.3 Where Maven fits in a DevOps workflow
 
 In a DevOps pipeline, Maven is responsible for the build and validation stage. It is used to:
 
-- resolve and manage project dependencies  
-- compile source code into JVM bytecode  
-- execute automated tests  
-- integrate code quality and security tools (e.g., SonarQube, Snyk)  
-- package the application into a versioned artifact (JAR/WAR)  
+- resolve and manage project dependencies
+- compile source code into JVM bytecode
+- execute automated tests
+- integrate code quality and security tools (e.g., SonarQube, Snyk)
+- package the application into a versioned artifact (JAR/WAR)
 
 This artifact is then used in later stages such as containerization (Docker) and deployment.
 
 ---
 
-#  Maven Project Structure
+## 03 · Maven Project Structure
 
-## Standard Directory Layout
+### 3.1 Standard Directory Layout
 
 ```bash
 project-root/
@@ -242,26 +109,27 @@ project-root/
     ├── classes/
     ├── test-classes/
     └── project-name.jar
-
 ```
----
-## Key Files and Directories
 
-### `pom.xml`
+---
+
+### 3.2 Key Files and Directories
+
+#### `pom.xml`
 
 The `pom.xml` (Project Object Model) is the core configuration file of a Maven project.
 
 It defines:
-- project dependencies  
-- build configuration  
-- plugins  
-- project metadata (name, version, packaging)  
+- project dependencies
+- build configuration
+- plugins
+- project metadata (name, version, packaging)
 
 It acts as the **source of truth** for how the project is built, tested, and packaged.
 
 ---
 
-### `src/main/java`
+#### `src/main/java`
 
 This directory contains the main application source code.
 
@@ -269,7 +137,7 @@ All production-ready `.java` files are placed here, following the package struct
 
 ---
 
-### `src/test/java`
+#### `src/test/java`
 
 This directory contains test classes.
 
@@ -277,80 +145,82 @@ These are used to validate application behavior using testing frameworks like JU
 
 ---
 
-### `src/main/resources`
+#### `src/main/resources`
 
 This directory stores configuration and resource files used by the application.
 
 Common files include:
-- `application.properties` → application configuration  
-- `logback.xml` → logging configuration  
+- `application.properties` → application configuration
+- `logback.xml` → logging configuration
 - static files (HTML, CSS, JSON)
 
 These files are included in the final build artifact.
 
 ---
 
-### `target/`
+#### `target/`
 
 The `target` directory is generated automatically when a build is executed.
 
 It contains:
-- compiled `.class` files  
-- test results and reports  
-- the final packaged artifact (JAR/WAR)  
+- compiled `.class` files
+- test results and reports
+- the final packaged artifact (JAR/WAR)
 
 This directory is temporary and should not be committed to version control should be added to the .gitignore file.
 
 ---
 
-## Why Convention Matters
+### 3.3 Why Convention Matters
 
 Maven follows a convention over configuration approach.
 
 This means:
-- you don’t need to define where your source code or tests are  
-- Maven already expects files in specific locations  
-- plugins and dependencies rely on this structure to work correctly  
+- you don't need to define where your source code or tests are
+- Maven already expects files in specific locations
+- plugins and dependencies rely on this structure to work correctly
 
 This reduces the need for manual configuration and makes projects easier to:
-- understand  
-- maintain  
-- run across different environments  
+- understand
+- maintain
+- run across different environments
 
 ---
 
-## What Happens When Convention is Broken
+### 3.4 What Happens When Convention is Broken
 
 If the standard structure is not followed, Maven and its plugins may not work as expected.
 
 Common issues include:
 
-- tests are not executed if they are not located in `src/test/java`  
-- plugins fail to run because they cannot find the expected files  
-- compilation issues if source files are misplaced  
-- incomplete or broken build artifacts due to missing classes  
+- tests are not executed if they are not located in `src/test/java`
+- plugins fail to run because they cannot find the expected files
+- compilation issues if source files are misplaced
+- incomplete or broken build artifacts due to missing classes
 
-Following Maven’s structure ensures that the build process runs smoothly without additional configuration.
+Following Maven's structure ensures that the build process runs smoothly without additional configuration.
 
 ---
 
-##  pom.xml (Heart of Maven)
+## 04 · pom.xml — Heart of Maven
 
 The `pom.xml` (Project Object Model) is the central configuration file in a Maven project. It defines everything required to build, test, and package an application.
 
 It acts as the **single source of truth**, controlling:
 
-- project identity  
-- dependencies  
-- plugins  
-- build behavior  
-- artifact distribution  
+- project identity
+- dependencies
+- plugins
+- build behavior
+- artifact distribution
 
 In a DevOps workflow, this file directly connects:
 
 `code → build → test → artifact → deployment`
 
 ---
+
+### 4.1 Full pom.xml
 
 ```xml
 <!-- Root element: defines this as a Maven project -->
@@ -388,6 +258,7 @@ In a DevOps workflow, this file directly connects:
         <version>4.0.5</version>
     </parent>
 ```
+
 <details>
   <summary>Click to expand: Full pom.xml</summary>
 
@@ -530,7 +401,9 @@ In a DevOps workflow, this file directly connects:
 
 ---
 
-### Project (Root Element)
+### 4.2 Tag Breakdown
+
+#### Project (Root Element)
 
 `<project>` is the root container of the POM. It defines this file as a Maven project and includes the XML schema used to validate its structure.
 
@@ -542,7 +415,7 @@ In a DevOps workflow, this file directly connects:
 
 ---
 
-### modelVersion
+#### modelVersion
 
 Defines the version of the POM model Maven should use. This ensures Maven parses the file correctly.
 
@@ -552,13 +425,13 @@ Defines the version of the POM model Maven should use. This ensures Maven parses
 
 ---
 
-### GAV (Project Identity)
+#### GAV (Project Identity)
 
 Defines the unique identity of the project in Maven repositories.
 
-- `groupId` → namespace (organization/domain)  
-- `artifactId` → project name  
-- `version` → release version  
+- `groupId` → namespace (organization/domain)
+- `artifactId` → project name
+- `version` → release version
 
 ```xml
 <groupId>com.example</groupId>
@@ -568,13 +441,13 @@ Defines the unique identity of the project in Maven repositories.
 
 ---
 
-### packaging
+#### packaging
 
 Specifies the type of artifact Maven should produce after build.
 
 Common types:
-- `jar` → standard Java application  
-- `war` → web application  
+- `jar` → standard Java application
+- `war` → web application
 
 ```xml
 <packaging>jar</packaging>
@@ -582,7 +455,7 @@ Common types:
 
 ---
 
-### name & description
+#### name & description
 
 Provides human-readable metadata for the project. Useful in repositories and documentation.
 
@@ -593,14 +466,14 @@ Provides human-readable metadata for the project. Useful in repositories and doc
 
 ---
 
-### parent
+#### parent
 
 Defines a parent POM to inherit configuration from (commonly Spring Boot).
 
 This allows reuse of:
-- dependency versions  
-- plugin configurations  
-- default build settings  
+- dependency versions
+- plugin configurations
+- default build settings
 
 ```xml
 <parent>
@@ -612,14 +485,14 @@ This allows reuse of:
 
 ---
 
-### properties
+#### properties
 
 Defines reusable variables across the POM. This centralizes configuration and avoids duplication.
 
 Typical use cases:
-- Java version  
-- encoding  
-- dependency versions  
+- Java version
+- encoding
+- dependency versions
 
 ```xml
 <properties>
@@ -630,9 +503,9 @@ Typical use cases:
 
 ---
 
-##  Dependencies and Dependency Management
+## 05 · Dependencies & Dependency Management
 
-### What are Dependencies?
+### 5.1 What are Dependencies?
 
 Dependencies are pre-built libraries that an application requires to run. Instead of writing everything from scratch, developers reuse existing, tested code from external sources like Maven Central.
 
@@ -640,36 +513,36 @@ Example: Instead of building a logging system, you import `logback` or `slf4j`.
 
 ---
 
-### Transitive Dependencies
+### 5.2 Transitive Dependencies
 
 Transitive dependencies are dependencies required by another dependency.
 
 Maven automatically:
-- downloads your declared dependency  
-- resolves and downloads all its required dependencies  
+- downloads your declared dependency
+- resolves and downloads all its required dependencies
 
 This keeps the `pom.xml` clean and avoids manually managing large dependency trees.
 
 ---
 
-### Direct vs Transitive Dependencies
+### 5.3 Direct vs Transitive Dependencies
 
-- **Direct dependencies** → explicitly defined in `pom.xml`  
-- **Transitive dependencies** → pulled in automatically by Maven  
+- **Direct dependencies** → explicitly defined in `pom.xml`
+- **Transitive dependencies** → pulled in automatically by Maven
 
 ---
 
-### How Maven Resolves Dependencies
+### 5.4 How Maven Resolves Dependencies
 
 During the build:
 
-1. Maven first checks the dependencies in the **local repository** (`~/.m2/repository`)  
-2. If not found, it downloads from **remote repositories (Maven Central)**  
-3. Dependencies are cached locally in **~/.m2/repository**  for future builds  
+1. Maven first checks the dependencies in the **local repository** (`~/.m2/repository`)
+2. If not found, it downloads from **remote repositories (Maven Central)**
+3. Dependencies are cached locally in **~/.m2/repository** for future builds
 
 ---
 
-## Dependencies Structure
+### 5.5 Dependencies Structure
 
 ```xml
 <dependencies>
@@ -694,9 +567,9 @@ During the build:
 
 ---
 
-## Breaking Down Dependency Tags
+### 5.6 Breaking Down Dependency Tags
 
-### GAV (Dependency Identity)
+#### GAV (Dependency Identity)
 
 Identifies a dependency uniquely:
 
@@ -708,17 +581,17 @@ Identifies a dependency uniquely:
 
 ---
 
-### scope
+#### scope
 
 Controls where and how a dependency is used.
 
 Common scopes:
 
-- **compile** (default) → available everywhere  
-- **test** → only used during testing  
-- **provided** → provided by runtime (e.g. servlet container)  
-- **runtime** → not needed at compile time, required at runtime    
-- **import** → used with BOM in dependencyManagement  
+- **compile** (default) → available everywhere
+- **test** → only used during testing
+- **provided** → provided by runtime (e.g. servlet container)
+- **runtime** → not needed at compile time, required at runtime
+- **import** → used with BOM in dependencyManagement
 
 ```xml
 <scope>test</scope>
@@ -726,14 +599,14 @@ Common scopes:
 
 ---
 
-### exclusions
+#### exclusions
 
 Used to remove unwanted transitive dependencies.
 
 Helps:
-- avoid conflicts  
-- reduce vulnerabilities  
-- keep builds clean  
+- avoid conflicts
+- reduce vulnerabilities
+- keep builds clean
 
 ```xml
 <exclusions>
@@ -746,13 +619,13 @@ Helps:
 
 ---
 
-## Dependency Management
+### 5.7 Dependency Management
 
 Defines dependency versions without actually importing them.
 
 Used mainly in:
-- parent projects  
-- multi-module architectures  
+- parent projects
+- multi-module architectures
 
 Child modules inherit versions from here.
 
@@ -772,22 +645,23 @@ Child modules inherit versions from here.
 
 ---
 
-## BOM (Bill of Materials)
+### 5.8 BOM (Bill of Materials)
 
 A BOM is a special POM that defines **versions for multiple dependencies** without including them.
 
 Purpose:
-- avoid version conflicts  
-- centralize version control  
-- simplify dependency declarations  
+- avoid version conflicts
+- centralize version control
+- simplify dependency declarations
 
-### Why Spring Boot Parent Acts Like a BOM
+#### Why Spring Boot Parent Acts Like a BOM
 
 Spring Boot parent:
-- manages dependency versions  
-- manages plugin versions  
+- manages dependency versions
+- manages plugin versions
 
 This allows you to define only:
+
 ```xml
 <groupId>org.springframework.boot</groupId>
 <artifactId>spring-boot-starter-web</artifactId>
@@ -797,50 +671,52 @@ Without specifying a version, it is inherited.
 
 ---
 
-## Dependency Conflict Resolution
+### 5.9 Dependency Conflict Resolution
 
-### How Maven Resolves Conflicts
+#### How Maven Resolves Conflicts
 
 Maven uses **"nearest definition wins"**:
 
-- The dependency closest to your project in the tree is selected  
-- Other versions are ignored  
+- The dependency closest to your project in the tree is selected
+- Other versions are ignored
 
 ---
 
-### Best Practices to Avoid Conflicts
+#### Best Practices to Avoid Conflicts
 
-- Use **dependencyManagement** to enforce versions  
-- Use **BOMs** (e.g. Spring Boot)  
-- Avoid mixing multiple versions of the same library  
-- Use **exclusions** to remove conflicting dependencies  
-- Regularly scan dependencies (Snyk, OWASP, etc.)  
+- Use **dependencyManagement** to enforce versions
+- Use **BOMs** (e.g. Spring Boot)
+- Avoid mixing multiple versions of the same library
+- Use **exclusions** to remove conflicting dependencies
+- Regularly scan dependencies (Snyk, OWASP, etc.)
 
 ---
 
-### DevOps Insight
+#### DevOps Insight
 
 Dependency management directly impacts:
 
-- build stability  
-- security (vulnerabilities)  
-- reproducibility across environments  
+- build stability
+- security (vulnerabilities)
+- reproducibility across environments
 
 Poor dependency control = unstable builds + production risks
 
 ---
 
-## Plugins and Plugin Management (Execution Layer)
+## 06 · Plugins, Lifecycle & Distribution
 
-### What are plugins?
+### 6.1 What are Plugins?
 
 Plugins are the execution layer of Maven. They are responsible for performing actual build tasks such as compiling source code, running tests, packaging artifacts, and generating reports. Instead of Maven doing the work itself, it delegates these operations to plugins.
 
 For example:
-- maven-compiler-plugin → compiles Java code into bytecode  
-- maven-surefire-plugin → runs unit tests before packaging  
+- maven-compiler-plugin → compiles Java code into bytecode
+- maven-surefire-plugin → runs unit tests before packaging
 
-### Plugin structure
+---
+
+### 6.2 Plugin Structure
 
 ```xml
 <build>
@@ -857,6 +733,7 @@ For example:
                     </goals>
                 </execution>
 ```
+
 <details>
   <summary>Click to expand: Full plugin structure</summary>
 
@@ -898,8 +775,9 @@ For example:
 
 </details>
 
+---
 
-### Plugin tag breakdown
+### 6.3 Plugin Tag Breakdown
 
 #### build
 
@@ -909,6 +787,8 @@ Defines how the project is built. This is where plugins are configured and execu
 <build>...</build>
 ```
 
+---
+
 #### plugins
 
 Container that holds all plugins used in the project.
@@ -916,6 +796,8 @@ Container that holds all plugins used in the project.
 ```xml
 <plugins>...</plugins>
 ```
+
+---
 
 #### plugin
 
@@ -929,6 +811,8 @@ Defines a single plugin used during the build process.
 </plugin>
 ```
 
+---
+
 #### GAV (Plugin Identity)
 
 Identifies the plugin uniquely in Maven repositories.
@@ -939,6 +823,8 @@ Identifies the plugin uniquely in Maven repositories.
 <version>1.0.0</version>
 ```
 
+---
+
 #### executions
 
 Defines when and how a plugin runs in the build lifecycle.
@@ -946,6 +832,8 @@ Defines when and how a plugin runs in the build lifecycle.
 ```xml
 <executions>...</executions>
 ```
+
+---
 
 #### execution
 
@@ -957,6 +845,8 @@ Represents a single run of the plugin with its own configuration.
 </execution>
 ```
 
+---
+
 #### id
 
 Unique identifier for a specific execution or configuration.
@@ -964,6 +854,8 @@ Unique identifier for a specific execution or configuration.
 ```xml
 <id>report</id>
 ```
+
+---
 
 #### configuration
 
@@ -973,12 +865,16 @@ Defines custom parameters that control plugin behavior.
 <configuration>...</configuration>
 ```
 
-### Plugins phases and goals
+---
 
-Phases define when an action happens in the Maven lifecycle.  
+### 6.4 Plugins Phases and Goals
+
+Phases define when an action happens in the Maven lifecycle.
 Goals define what action the plugin performs during that phase.
 
-### Common plugins
+---
+
+### 6.5 Common Plugins
 
 | plugin | phase | goal |
 |--------|-------|------|
@@ -994,12 +890,12 @@ Goals define what action the plugin performs during that phase.
 | jacoco-maven-plugin | test | jacoco:report - generates coverage report |
 | jacoco-maven-plugin | verify | jacoco:check - enforces coverage rules |
 
-### Plugin management
+---
 
-Plugin management defines plugin versions centrally without executing them.  
+### 6.6 Plugin Management
+
+Plugin management defines plugin versions centrally without executing them.
 It is mainly used in parent projects so child modules inherit consistent plugin versions.
-
-### Plugin management structure
 
 ```xml
 <build>
@@ -1017,9 +913,9 @@ It is mainly used in parent projects so child modules inherit consistent plugin 
 
 ---
 
-## Distribution Management
+### 6.7 Distribution Management
 
-### What distribution management is
+#### What distribution management is
 
 `distributionManagement` defines where Maven should publish the final built artifacts after a successful build.
 
@@ -1033,7 +929,9 @@ In production environments this is commonly used with:
 
 Maven uses the repository `id` defined in `distributionManagement` to communicate with matching credentials stored inside the `settings.xml` file.
 
-### Distribution management structure
+---
+
+#### Distribution management structure
 
 ```xml
 <distributionManagement>
@@ -1053,7 +951,7 @@ Maven uses the repository `id` defined in `distributionManagement` to communicat
 </distributionManagement>
 ```
 
-### Distribution management tag breakdown
+---
 
 #### distributionManagement
 
@@ -1062,6 +960,8 @@ Defines where Maven should publish built artifacts after packaging.
 ```xml
 <distributionManagement>...</distributionManagement>
 ```
+
+---
 
 #### repository
 
@@ -1073,6 +973,8 @@ Defines the repository where stable production-ready releases are deployed.
     <url>https://repo.example.com/repository/maven-releases/</url>
 </repository>
 ```
+
+---
 
 #### snapshotRepository
 
@@ -1087,6 +989,8 @@ Snapshot versions are usually under active development.
 </snapshotRepository>
 ```
 
+---
+
 #### id
 
 Unique identifier used to link the repository with credentials inside the `settings.xml` file.
@@ -1096,6 +1000,8 @@ The IDs inside `distributionManagement` and `settings.xml` must match for authen
 ```xml
 <id>company-releases</id>
 ```
+
+---
 
 #### url
 
@@ -1107,11 +1013,11 @@ Defines the repository endpoint Maven communicates with when uploading artifacts
 
 ---
 
-## settings.xml
+## 07 · settings.xml & Maven Profiles
 
-### What settings.xml is
+### 7.1 What settings.xml is
 
-The `settings.xml` file is Maven’s local configuration file located inside the `.m2` directory.
+The `settings.xml` file is Maven's local configuration file located inside the `.m2` directory.
 
 ```bash
 ~/.m2/settings.xml
@@ -1128,7 +1034,9 @@ This file should never be committed to version control because it can contain se
 
 The `pom.xml` defines *what* repository Maven should communicate with, while the `settings.xml` file defines *how* Maven authenticates and connects to those repositories.
 
-### settings.xml structure
+---
+
+### 7.2 settings.xml Structure
 
 ```xml
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -1145,6 +1053,7 @@ The `pom.xml` defines *what* repository Maven should communicate with, while the
         </mirror>
     </mirrors>
 ```
+
 <details>
   <summary>Click to expand: Full settings.xml structure</summary>
 
@@ -1183,7 +1092,10 @@ The `pom.xml` defines *what* repository Maven should communicate with, while the
 ```
 
 </details>
-### settings.xml tag breakdown
+
+---
+
+### 7.3 settings.xml Tag Breakdown
 
 #### mirrors
 
@@ -1194,6 +1106,8 @@ Mirrors act like routing rules and can force Maven to fetch dependencies from a 
 ```xml
 <mirrors>...</mirrors>
 ```
+
+---
 
 #### mirror
 
@@ -1207,6 +1121,8 @@ Defines a single mirror repository Maven should communicate with.
 </mirror>
 ```
 
+---
+
 #### mirrorOf
 
 Specifies which repositories should be redirected to the mirror.
@@ -1217,6 +1133,8 @@ Specifies which repositories should be redirected to the mirror.
 <mirrorOf>*</mirrorOf>
 ```
 
+---
+
 #### servers
 
 Container for authentication credentials used when Maven uploads or downloads artifacts.
@@ -1224,6 +1142,8 @@ Container for authentication credentials used when Maven uploads or downloads ar
 ```xml
 <servers>...</servers>
 ```
+
+---
 
 #### server
 
@@ -1239,6 +1159,8 @@ The `id` must match the repository ID inside `distributionManagement`.
 </server>
 ```
 
+---
+
 #### username and password
 
 Credentials Maven uses to authenticate against private repositories.
@@ -1252,8 +1174,8 @@ Production environments usually inject these values through environment variable
 
 ---
 
-### Maven Profiles
----
+### 7.4 Maven Profiles
+
 Profiles are environment-specific configurations Maven uses to customize how a project builds and behaves under different environments.
 
 They allow a single project to have different:
@@ -1280,7 +1202,7 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
 
 ---
 
-### Profile structure inside `pom.xml`
+### 7.5 Profile Structure inside `pom.xml`
 
 ```xml
 <profiles>
@@ -1300,10 +1222,11 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
             </dependency>
         </dependencies>
 ```
+
 <details>
   <summary>Click to expand: Full profile structure @pom.xml</summary>
 
-  ```xml
+```xml
         <build>
             <plugins>
                 <plugin>
@@ -1327,9 +1250,10 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
 ```
 
 </details>
+
 ---
 
-### Profile structure inside `settings.xml`
+### 7.6 Profile Structure inside `settings.xml`
 
 ```xml
 <settings>
@@ -1345,10 +1269,11 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
                 </repository>
             </repositories>
 ```
+
 <details>
   <summary>Click to expand: Full profile structure @settings.xml</summary>
 
-  ```xml
+```xml
             <pluginRepositories>
                 <pluginRepository>
                     <id>company-plugins</id>
@@ -1371,9 +1296,10 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
 ```
 
 </details>
+
 ---
 
-### Profile tag breakdown
+### 7.7 Profile Tag Breakdown
 
 #### profiles
 
@@ -1487,7 +1413,7 @@ Automatically activates selected profiles during Maven builds.
 
 ---
 
-### How pom.xml and settings.xml profiles work together
+### 7.8 How pom.xml and settings.xml Profiles Work Together
 
 The `pom.xml` profile controls the application's build behavior such as:
 - dependencies
@@ -1506,7 +1432,7 @@ This separation keeps sensitive infrastructure configuration outside the project
 
 ---
 
-## Maven Repositories
+## 08 · Maven Repositories
 
 Repositories are storage locations where Maven downloads dependencies and plugins from, or uploads built artifacts to.
 
@@ -1519,9 +1445,9 @@ Maven mainly works with three repository types:
 
 ---
 
-### Local repository (`~/.m2/repository`)
+### 8.1 Local Repository (`~/.m2/repository`)
 
-The local repository is Maven’s cache stored inside the user's home directory.
+The local repository is Maven's cache stored inside the user's home directory.
 
 ```bash
 ~/.m2/repository
@@ -1541,7 +1467,7 @@ The local repository is automatically managed by Maven.
 
 ---
 
-### Maven Central Repository
+### 8.2 Maven Central Repository
 
 The Maven Central Repository is the default public repository Maven communicates with when downloading dependencies and plugins.
 
@@ -1555,7 +1481,7 @@ Maven Central is the main source for most public Java dependencies.
 
 ---
 
-### Remote repositories
+### 8.3 Remote Repositories
 
 Remote repositories are external repositories hosted outside the local machine.
 
@@ -1585,7 +1511,7 @@ Remote repositories are usually configured inside:
 
 ---
 
-### Maven repository resolution flow
+### 8.4 Maven Repository Resolution Flow
 
 When Maven needs a dependency, it follows this order:
 
@@ -1597,7 +1523,7 @@ Once downloaded, the dependency is cached locally for future builds.
 
 ---
 
-# Logging and Configuration
+## 09 · Logging & Application Configuration
 
 Logging and configuration are what make an application observable and environment-aware. Without them, you are essentially flying blind in production since you have no way of knowing what the application is doing, what went wrong, or how it is behaving across different environments.
 
@@ -1605,9 +1531,7 @@ In Maven-based Spring Boot projects, logging and configuration are managed throu
 
 ---
 
-## Logging
-
-### What logging is
+### 9.1 What Logging Is
 
 Logging is the process of recording application events during runtime. Every time something meaningful happens inside the application a request comes in, a database query runs, an error occurs, logging captures that moment and writes it somewhere useful.
 
@@ -1615,7 +1539,7 @@ The naive approach is `System.out.println()`. It works locally, but it falls apa
 
 ---
 
-### The logging architecture — SLF4J and Logback
+### 9.2 The Logging Architecture — SLF4J and Logback
 
 Spring Boot uses a two-layer logging setup. Understanding why this exists matters more than just knowing what the layers are.
 
@@ -1636,7 +1560,7 @@ If you are already using `spring-boot-starter-web`, this is pulled in automatica
 
 ---
 
-### Log levels
+### 9.3 Log Levels
 
 Log levels define the severity and purpose of a log message. They also act as filters when you set a level, you only see messages at that level and above.
 
@@ -1653,7 +1577,7 @@ In development, `DEBUG` gives you the full picture. In production, `WARN` or `ER
 
 ---
 
-### Logger implementation in code
+### 9.4 Logger Implementation in Code
 
 This is how logging looks inside a real Spring Boot controller. The logger is tied to the class it lives in, which makes it easy to trace exactly where a log message came from.
 
@@ -1684,9 +1608,9 @@ public class GreetingController {
 
 ---
 
-## Logback configuration
+### 9.5 Logback Configuration
 
-### Where the configuration file lives
+#### Where the configuration file lives
 
 Logback behavior is controlled through a configuration file placed in:
 
@@ -1698,7 +1622,7 @@ This file is automatically picked up by Spring Boot at startup. It tells Logback
 
 ---
 
-### The three pillars of logback.xml
+#### The three pillars of logback.xml
 
 Every `logback.xml` is built around three core concepts:
 
@@ -1710,7 +1634,7 @@ Every `logback.xml` is built around three core concepts:
 
 ---
 
-### logback.xml structure
+#### logback.xml structure
 
 ```xml
 <configuration>
@@ -1727,10 +1651,11 @@ Every `logback.xml` is built around three core concepts:
     </layout>
   </appender>
 ```
+
 <details>
   <summary>Click to expand: Full logback.xml structure</summary>
 
-```xml  
+```xml
   <!-- RollingFileAppender: writes to disk and rotates files automatically -->
   <appender name="RollingFile"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -1767,9 +1692,10 @@ Every `logback.xml` is built around three core concepts:
 ```
 
 </details>
+
 ---
 
-### Logback tag breakdown
+### 9.6 Logback Tag Breakdown
 
 #### configuration
 
@@ -1864,9 +1790,9 @@ Filters logs by level inside a specific appender. Useful when you want a file ap
 
 ---
 
-## Application configuration
+### 9.7 Application Configuration
 
-### What configuration is
+#### What configuration is
 
 Configuration defines how the application behaves in a given environment. Instead of hardcoding values directly in source code, production applications externalize configuration into files and environment variables. This makes the same codebase deployable across development, testing, and production without changing a single line of code.
 
@@ -1880,7 +1806,7 @@ Common things that get configured externally:
 
 ---
 
-### application.properties
+#### application.properties
 
 Spring Boot's primary configuration file lives at:
 
@@ -1902,7 +1828,7 @@ spring.profiles.active=dev
 
 ---
 
-### Common configuration properties
+#### Common configuration properties
 
 | Property | Purpose |
 |---|---|
@@ -1914,7 +1840,7 @@ spring.profiles.active=dev
 
 ---
 
-## Environment-specific configuration with Maven Profiles
+### 9.8 Environment-specific Configuration with Maven Profiles
 
 You do not want the same configuration running locally and in production. In development, you want `DEBUG` level logs, readable plain text, and the console. In production, you want `WARN` or `ERROR` level logs, `RollingFileAppender` or a log shipper, and JSON format so centralized tools like ELK or Splunk can parse them efficiently.
 
@@ -1922,7 +1848,7 @@ Maven Profiles let a single project carry different behaviors for each environme
 
 ---
 
-### Environment-specific properties files
+#### Environment-specific properties files
 
 Spring Boot supports named profile files that activate automatically:
 
@@ -1934,7 +1860,7 @@ When `spring.profiles.active=prod` is set, Spring Boot loads `application-prod.p
 
 ---
 
-### Profile structure in pom.xml
+#### Profile structure in pom.xml
 
 ```xml
 <profiles>
@@ -1966,7 +1892,7 @@ mvn clean package -P production
 
 ---
 
-### Development vs production logging — a practical comparison
+#### Development vs production logging — a practical comparison
 
 | Concern | Development | Production |
 |---|---|---|
@@ -1977,7 +1903,7 @@ mvn clean package -P production
 
 ---
 
-## Environment variables
+### 9.9 Environment Variables
 
 Sensitive values like database credentials, API tokens, and passwords must never live inside `pom.xml`, source code, or committed configuration files. Production systems inject these values at runtime through environment variables.
 
@@ -1990,7 +1916,7 @@ When the application starts, Spring Boot resolves `${DB_USER}` from the system e
 
 ---
 
-## The DevOps "Big Three" logging strategies
+### 9.10 The DevOps "Big Three" Logging Strategies
 
 Beyond basic setup, production logging in DevOps environments focuses on three operational concerns.
 
@@ -2002,7 +1928,7 @@ Beyond basic setup, production logging in DevOps environments focuses on three o
 
 ---
 
-## Log shipping and centralization
+### 9.11 Log Shipping and Centralization
 
 In containerized production systems, logs do not just sit on disk. They move through a pipeline from the container to a place where engineers can search, visualize, and alert on them.
 
@@ -2014,7 +1940,7 @@ Docker containers are designed to log to `stdout`. Docker captures it, and a log
 
 ---
 
-## Best practices and what to avoid
+### 9.12 Best Practices and What to Avoid
 
 Log exception stack traces without them, an `ERROR` log tells you something failed but not where or why.
 
@@ -2024,15 +1950,15 @@ Do not over-log logging inside tight loops or on every iteration of a high-frequ
 
 ---
 
-## How it all connects
+### 9.13 How it All Connects
 
 When everything is wired correctly, logging and configuration work together as a system. The `logback.xml` controls what gets logged and where. The `application.properties` and profile files control how the application behaves in each environment. Environment variables keep secrets out of the repository. Maven Profiles activate the right configuration for the right deployment target. And in production, a log shipper moves those logs into a centralized platform where teams can actually observe what the system is doing.
 
 ---
 
-# Maven Multi-Module Projects
+## 10 · Multi-Module Projects
 
-## What is a Multi-Module Project?
+### 10.1 What is a Multi-Module Project?
 
 A multi-module project is a project structure where one application is split into independent sections called modules. Each module handles a specific responsibility of the system while still being part of one larger project.
 
@@ -2044,7 +1970,7 @@ A multi-module architecture helps teams avoid dependency conflicts, reduce dupli
 
 ---
 
-# Multi-Module Project Structure
+### 10.2 Multi-Module Project Structure
 
 ```bash
 multi-module-demo/
@@ -2070,13 +1996,13 @@ multi-module-demo/
 
 ---
 
-# Parent POM
+### 10.3 Parent POM
 
 The parent POM is the central controller of the entire multi-module project. It defines all shared resources for the child modules - the properties, dependency management, and plugin management that every module in the project inherits from. It does not contain any application business logic. Its job is purely coordination: making sure every child module is working with the same dependency versions, the same plugin versions, and the same build configuration so there are no version mismatches or inconsistencies across services.
 
 ---
 
-## Parent POM Sample
+#### Parent POM Sample
 
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -2091,7 +2017,7 @@ The parent POM is the central controller of the entire multi-module project. It 
     <version>1.0.0</version>
 
     <packaging>pom</packaging>
-```    
+```
 
 <details>
   <summary>Click to expand: Full parent pom</summary>
@@ -2149,13 +2075,14 @@ The parent POM is the central controller of the entire multi-module project. It 
 
 </project>
 ```
+
 </details>
 
 ---
 
-# Parent POM Breakdown
+### 10.4 Parent POM Breakdown
 
-### packaging
+#### packaging
 
 The parent uses `pom` packaging because it acts as a container project. It does not generate a runnable JAR or WAR file.
 
@@ -2165,7 +2092,7 @@ The parent uses `pom` packaging because it acts as a container project. It does 
 
 ---
 
-### modules
+#### modules
 
 The `<modules>` section tells Maven which child projects belong to the parent project.
 
@@ -2180,7 +2107,7 @@ When Maven builds the parent, it automatically builds all listed modules.
 
 ---
 
-### properties
+#### properties
 
 Defines reusable shared variables used across all modules.
 
@@ -2192,7 +2119,7 @@ Defines reusable shared variables used across all modules.
 
 ---
 
-### dependencyManagement
+#### dependencyManagement
 
 Defines dependency versions centrally without actually importing them.
 
@@ -2204,7 +2131,7 @@ Child modules inherit the versions from here to maintain consistency across the 
 
 ---
 
-### pluginManagement
+#### pluginManagement
 
 Defines plugin versions and shared plugin configurations for all child modules.
 
@@ -2216,7 +2143,7 @@ This prevents children from repeatedly redefining the same plugin versions.
 
 ---
 
-# Child POM
+### 10.5 Child POM
 
 Each module inside the multi-module project has its own child POM.
 
@@ -2233,7 +2160,7 @@ The child inherits shared configurations from the parent to avoid duplication an
 
 ---
 
-## Child POM Sample
+#### Child POM Sample
 
 ```xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -2248,7 +2175,7 @@ The child inherits shared configurations from the parent to avoid duplication an
         <artifactId>multi-module-demo</artifactId>
         <version>1.0.0</version>
     </parent>
-```    
+```
 
 <details>
   <summary>Click to expand: Full child pom</summary>
@@ -2296,7 +2223,7 @@ The child inherits shared configurations from the parent to avoid duplication an
                           <ports>
                             <port>8080</port>
                           </ports>
-                        </build>                    
+                        </build>
                     </image>
                     </images>
                 </configuration>
@@ -2316,12 +2243,14 @@ The child inherits shared configurations from the parent to avoid duplication an
 
 </project>
 ```
+
 </details>
+
 ---
 
-# Child POM Breakdown
+### 10.6 Child POM Breakdown
 
-### parent
+#### parent
 
 Connects the child module to the parent POM so it can inherit shared configurations.
 
@@ -2335,7 +2264,7 @@ Connects the child module to the parent POM so it can inherit shared configurati
 
 ---
 
-### artifactId
+#### artifactId
 
 Defines the identity of the module itself.
 
@@ -2345,7 +2274,7 @@ Defines the identity of the module itself.
 
 ---
 
-### dependencies
+#### dependencies
 
 Contains the libraries specifically needed by this module.
 
@@ -2357,7 +2286,7 @@ The versions are inherited from the parent `dependencyManagement`.
 
 ---
 
-### plugins
+#### plugins
 
 Contains plugins needed specifically for this module.
 
@@ -2369,7 +2298,7 @@ Some plugins may only apply to one service and should not exist globally in the 
 
 ---
 
-### docker-maven-plugin
+#### docker-maven-plugin
 
 Builds Docker images directly during the Maven lifecycle.
 
@@ -2381,7 +2310,7 @@ This plugin belongs in the child module because containers are usually built per
 
 ---
 
-# How Parent and Child POMs Communicate
+### 10.7 How Parent and Child POMs Communicate
 
 | Aspect | Parent POM | Child POM |
 |---|---|---|
@@ -2398,7 +2327,7 @@ This plugin belongs in the child module because containers are usually built per
 
 ---
 
-# How the Multi-Module System Works Internally
+### 10.8 How the Multi-Module System Works Internally
 
 When Maven starts building the parent project, it first reads the `<modules>` section to identify all child projects.
 
@@ -2414,7 +2343,7 @@ Each child module builds independently but still follows the standards defined b
 
 ---
 
-# Why Multi-Module Projects Matter
+### 10.9 Why Multi-Module Projects Matter
 
 Multi-module projects are heavily used in real production systems because they improve maintainability, scalability, and DevOps operations.
 
@@ -2439,19 +2368,19 @@ Key benefits include:
 
 ---
 
-## Docker Integration
+## 11 · Docker Integration
 
 Docker integration allows Maven applications to be packaged into lightweight, portable containers that can run consistently across different environments. Instead of deploying only the JAR file and manually configuring Java on every server, Docker packages both the application and its runtime environment into a single image.
 
 This solves one of the biggest DevOps problems:
 
-> “It works on my machine but fails in production.”
+> "It works on my machine but fails in production."
 
 Containerization ensures the same application behaves consistently regardless of where it runs — locally, in a CI/CD pipeline, on a testing server, or in a Kubernetes cluster in the cloud. For Java applications, Docker packages the compiled JAR, the Java runtime, environment configuration, and startup commands into a single image. This makes deployments faster, reproducible, and straightforward to scale.
 
 ---
 
-## Why Containerize Maven Applications
+### 11.1 Why Containerize Maven Applications
 
 A Maven build produces the application artifact, usually a JAR or WAR file. Docker takes that artifact and packages it into a runnable container image.
 
@@ -2465,7 +2394,7 @@ In CI/CD pipelines, Docker images become deployable artifacts. Instead of rebuil
 
 ---
 
-## Docker Build Flow in CI/CD
+### 11.2 Docker Build Flow in CI/CD
 
 In production DevOps workflows, Docker usually integrates directly into the CI/CD pipeline.
 
@@ -2485,7 +2414,7 @@ This creates immutable deployments because the exact same image tested in CI is 
 
 ---
 
-## Multi-Stage Docker Builds
+### 11.3 Multi-Stage Docker Builds
 
 Modern Maven applications usually use multi-stage Docker builds.
 
@@ -2500,7 +2429,7 @@ This keeps production containers smaller, cleaner, and more secure.
 
 ---
 
-## Multi-Stage Dockerfile Example
+### 11.4 Multi-Stage Dockerfile Example
 
 ```dockerfile
 # ---------------- BUILD STAGE ----------------
@@ -2528,9 +2457,9 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 ---
 
-## Dockerfile Breakdown
+### 11.5 Dockerfile Breakdown
 
-### FROM
+#### FROM
 
 Defines the base image used for each stage.
 
@@ -2548,7 +2477,7 @@ FROM eclipse-temurin:17-jre-alpine
 
 ---
 
-### WORKDIR
+#### WORKDIR
 
 Defines the working directory inside the container. Every command after this executes relative to that location.
 
@@ -2558,7 +2487,7 @@ WORKDIR /build
 
 ---
 
-### COPY
+#### COPY
 
 Copies files from the local project into the container filesystem. Docker layers are heavily optimized around COPY instructions.
 
@@ -2572,10 +2501,9 @@ COPY src ./src
 
 ---
 
-### RUN
+#### RUN
 
 Executes commands during the image build process. In Maven projects this is typically where dependencies get downloaded, code gets compiled, and the artifact gets packaged.
-
 
 ```dockerfile
 RUN mvn clean package -DskipTests
@@ -2583,7 +2511,7 @@ RUN mvn clean package -DskipTests
 
 ---
 
-### dependency:go-offline
+#### dependency:go-offline
 
 Downloads dependencies before source code is copied. If only Java code changes but the `pom.xml` remains unchanged, Docker reuses the cached dependency layer instead of downloading dependencies again.
 
@@ -2595,7 +2523,7 @@ This significantly speeds up rebuilds in CI/CD pipelines.
 
 ---
 
-### COPY --from
+#### COPY --from
 
 Copies artifacts between Docker stages. Instead of transferring the entire Maven project into production, only the final JAR file is copied into the runtime container.
 
@@ -2607,7 +2535,7 @@ This keeps production images minimal.
 
 ---
 
-### EXPOSE
+#### EXPOSE
 
 Documents the application port used by the container.
 
@@ -2617,7 +2545,7 @@ EXPOSE 8080
 
 ---
 
-### ENTRYPOINT
+#### ENTRYPOINT
 
 Defines the command executed when the container starts.
 
@@ -2629,13 +2557,13 @@ This becomes the container startup process.
 
 ---
 
-## Why Multi-Stage Builds Matter
+### 11.6 Why Multi-Stage Builds Matter
 
 Multi-stage Docker builds matter in production because the final image only contains what the application actually needs to run the JAR and the Java runtime. Everything else, the Maven installation, source code, build tools, and caches, stays behind in the builder stage. This keeps the image small, reduces startup time, and shrinks the attack surface because there is no build tooling or raw source code sitting inside the production container for anyone to access.
 
 ---
 
-## Docker Caching and Maven Optimization
+### 11.7 Docker Caching and Maven Optimization
 
 One of the most important optimizations in Maven Docker builds is copying the `pom.xml` before the source code.
 
@@ -2648,7 +2576,7 @@ Docker caches this layer separately. If developers only modify Java source code,
 
 ---
 
-## How Maven and Docker Work Together
+### 11.8 How Maven and Docker Work Together
 
 Maven and Docker solve different parts of the deployment lifecycle. Maven handles the build side — managing dependencies, compiling code, running tests, and packaging the application into a JAR. Docker takes it from there, packaging that JAR into a container image that runs consistently regardless of the environment it lands in. One builds the artifact, the other deploys it.
 
