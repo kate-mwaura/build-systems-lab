@@ -1,4 +1,158 @@
-# 🔹 Introduction
+# Maven Notes — Table of Contents
+
+> Your Google Map for this doc. 10 sections · ~70 KB of build knowledge.
+> Click any section to expand it.
+
+---
+
+<details>
+<summary><strong>01 · Introduction &amp; What is Maven</strong></summary>
+
+<br>
+
+- **Why Maven exists** — the build chaos it replaced and the problem it solves
+- **Where it fits in DevOps** — compile → test → package → deploy
+- **What this doc covers** — your reading roadmap
+
+</details>
+
+---
+
+<details>
+<summary><strong>02 · Project Structure</strong></summary>
+
+<br>
+
+- **Standard directory layout** — where source, tests, and resources live
+- **Convention over configuration** — why following the structure matters
+- **What breaks when you deviate** — tests not found, missing classes, broken artifacts
+
+</details>
+
+---
+
+<details>
+<summary><strong>03 · pom.xml — Heart of Maven</strong></summary>
+
+<br>
+
+- **GAV (groupId · artifactId · version)** — project identity
+- **packaging · name · description** — JAR vs WAR and metadata
+- **parent block** — inheriting Spring Boot defaults
+- **properties** — reusable variables (Java version, encoding)
+
+</details>
+
+---
+
+<details>
+<summary><strong>04 · Dependencies &amp; Dependency Management</strong></summary>
+
+<br>
+
+- **Direct vs transitive** — what you declare vs what Maven pulls in automatically
+- **Scope** — compile · test · provided · runtime · import
+- **exclusions** — removing unwanted transitive dependencies
+- **BOM (Bill of Materials)** — centralized version control, Spring Boot BOM
+- **Conflict resolution** — nearest definition wins + best practices
+
+</details>
+
+---
+
+<details>
+<summary><strong>05 · Plugins, Lifecycle &amp; Distribution</strong></summary>
+
+<br>
+
+- **Plugins as the execution layer** — compile, test, package, report
+- **Phases vs goals** — when things run vs what they do
+- **Common plugin table** — compiler · surefire · jacoco · spring-boot
+- **pluginManagement** — centralizing plugin versions in parent POMs
+- **distributionManagement** — pushing artifacts to Nexus / Artifactory
+
+</details>
+
+---
+
+<details>
+<summary><strong>06 · settings.xml &amp; Maven Profiles</strong></summary>
+
+<br>
+
+- **settings.xml vs pom.xml** — machine config vs project config
+- **mirrors & servers** — routing + authentication for private repositories
+- **Maven profiles** — dev · test · staging · production
+- **Activating profiles** — `mvn clean package -P production`
+
+</details>
+
+---
+
+<details>
+<summary><strong>07 · Maven Repositories</strong></summary>
+
+<br>
+
+- **Local repository** — the `.m2` cache, how Maven reuses downloaded dependencies
+- **Maven Central** — the default public source for open-source Java libraries
+- **Remote repositories** — Nexus, Artifactory, GitHub Packages, AWS CodeArtifact
+- **Resolution order** — local → remote → Central, cached after first download
+
+</details>
+
+---
+
+<details>
+<summary><strong>08 · Logging &amp; Application Configuration</strong></summary>
+
+<br>
+
+- **SLF4J + Logback architecture** — abstraction layer vs implementation engine
+- **Log levels** — TRACE · DEBUG · INFO · WARN · ERROR · FATAL
+- **logback.xml** — appenders, encoders, pattern tokens, root logger
+- **application.properties** — port, profile, endpoints, environment variables
+- **Dev vs prod logging** — console plain text vs JSON for ELK / Grafana
+- **Log shipping stacks** — ELK · EFK · PLG (Promtail + Loki + Grafana)
+
+</details>
+
+---
+
+<details>
+<summary><strong>09 · Multi-Module Projects</strong></summary>
+
+<br>
+
+- **What is a multi-module project** — splitting one app into independent, focused modules
+- **Parent POM as coordinator** — shared dependencies, plugins, and properties across all modules
+- **Child POMs** — service-specific logic that inherits from the parent
+- **How the system works internally** — build order, version consistency, conflict prevention
+- **Why multi-module matters** — reusability, cleaner architecture, faster teamwork, easier CI/CD
+
+</details>
+
+---
+
+<details>
+<summary><strong>10 · Docker Integration</strong></summary>
+
+<br>
+
+- **Why containerize Maven applications** — solving "works on my machine" once and for all
+- **Docker build flow in CI/CD** — code push → Maven build → image build → registry → deploy
+- **Multi-stage Dockerfile** — builder stage (JDK + Maven) → runtime stage (JRE only)
+- **Dockerfile breakdown** — FROM · WORKDIR · COPY · RUN · EXPOSE · ENTRYPOINT
+- **Docker caching** — copy `pom.xml` first, run `dependency:go-offline` to skip re-downloads
+- **Maven + Docker working together** — build once, deploy the same image everywhere
+
+</details>
+
+---
+
+> 💡 **Recruiter tip:** Sections 03–05 are the Maven core. Sections 08 & 10 show real DevOps integration depth.
+
+#  Introduction
 
 ## Why Maven matters in DevOps
 
@@ -22,7 +176,7 @@ The goal is to provide a practical reference that reflects both conceptual under
 
 ---
 
-# 🔹 What is Maven
+#  What is Maven
 
 ## Definition
 
@@ -56,7 +210,7 @@ This artifact is then used in later stages such as containerization (Docker) and
 
 ---
 
-# 🔹 Maven Project Structure
+#  Maven Project Structure
 
 ## Standard Directory Layout
 
@@ -180,7 +334,7 @@ Following Maven’s structure ensures that the build process runs smoothly witho
 
 ---
 
-## 🔹pom.xml (Heart of Maven)
+##  pom.xml (Heart of Maven)
 
 The `pom.xml` (Project Object Model) is the central configuration file in a Maven project. It defines everything required to build, test, and package an application.
 
@@ -476,7 +630,7 @@ Typical use cases:
 
 ---
 
-## 🔹 Dependencies and Dependency Management
+##  Dependencies and Dependency Management
 
 ### What are Dependencies?
 
@@ -702,7 +856,11 @@ For example:
                         <goal>prepare-agent</goal>
                     </goals>
                 </execution>
+```
+<details>
+  <summary>Click to expand: Full plugin structure</summary>
 
+```xml
                 <execution>
                     <id>report</id>
                     <phase>test</phase>
@@ -737,6 +895,9 @@ For example:
     </plugins>
 </build>
 ```
+
+</details>
+
 
 ### Plugin tag breakdown
 
@@ -983,7 +1144,11 @@ The `pom.xml` defines *what* repository Maven should communicate with, while the
             <mirrorOf>*</mirrorOf>
         </mirror>
     </mirrors>
+```
+<details>
+  <summary>Click to expand: Full settings.xml structure</summary>
 
+```xml
     <servers>
         <server>
             <id>company-releases</id>
@@ -1017,6 +1182,7 @@ The `pom.xml` defines *what* repository Maven should communicate with, while the
 </settings>
 ```
 
+</details>
 ### settings.xml tag breakdown
 
 #### mirrors
@@ -1133,7 +1299,11 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
                 <scope>runtime</scope>
             </dependency>
         </dependencies>
+```
+<details>
+  <summary>Click to expand: Full profile structure @pom.xml</summary>
 
+  ```xml
         <build>
             <plugins>
                 <plugin>
@@ -1156,6 +1326,7 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
 </profiles>
 ```
 
+</details>
 ---
 
 ### Profile structure inside `settings.xml`
@@ -1173,7 +1344,11 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
                     <url>https://repo.example.com/repository/maven-public/</url>
                 </repository>
             </repositories>
+```
+<details>
+  <summary>Click to expand: Full profile structure @settings.xml</summary>
 
+  ```xml
             <pluginRepositories>
                 <pluginRepository>
                     <id>company-plugins</id>
@@ -1195,6 +1370,7 @@ The `pom.xml` profile defines the build behavior, while the `settings.xml` profi
 </settings>
 ```
 
+</details>
 ---
 
 ### Profile tag breakdown
@@ -1550,7 +1726,11 @@ Every `logback.xml` is built around three core concepts:
       </Pattern>
     </layout>
   </appender>
+```
+<details>
+  <summary>Click to expand: Full logback.xml structure</summary>
 
+```xml  
   <!-- RollingFileAppender: writes to disk and rotates files automatically -->
   <appender name="RollingFile"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -1586,6 +1766,7 @@ Every `logback.xml` is built around three core concepts:
 </configuration>
 ```
 
+</details>
 ---
 
 ### Logback tag breakdown
@@ -1913,7 +2094,7 @@ The parent POM is the central controller of the entire multi-module project. It 
 ```    
 
 <details>
-  <summary>Click to expand: Full child pom</summary>
+  <summary>Click to expand: Full parent pom</summary>
 
 ```xml
     <modules>
