@@ -69,7 +69,7 @@ The application writes logs through SLF4J, which acts as an abstraction layer si
 How the application moves from source code into a lightweight production container image through a two-stage build process.
 
 <div align="center">
-  <img src="./images/docker-build-architecture.svg" alt="Docker Build Architecture" width="100%"/>
+  <img src="./images/docker-build-architecture.png" alt="Docker Build Architecture" width="100%"/>
 </div>
 
 Stage 1 uses a full Maven and JDK image to compile, resolve dependencies, and package the application into an executable JAR. Stage 2 starts fresh from a minimal JRE Alpine image and copies only the final JAR across — leaving behind the compiler, Maven, source code, and dependency cache. The result is a lightweight production image containing nothing beyond the Java runtime and the application artifact.
@@ -81,7 +81,7 @@ Stage 1 uses a full Maven and JDK image to compile, resolve dependencies, and pa
 How the three containers are connected, networked, and orchestrated together as a single local stack.
 
 <div align="center">
-  <img src="./images/docker-compose-network.svg" alt="Docker Compose Network Architecture" width="100%"/>
+  <img src="./images/docker-compose-network.png" alt="Docker Compose Network Architecture" width="100%"/>
 </div>
 
 Docker Compose provisions `greeting-api`, `sonarqube`, and `snyk` as connected services on a shared bridge network called `greetings-net`, where containers discover each other by service name rather than IP address — so `greeting-api` reaches SonarQube at `http://sonarqube:9000` internally. Port mappings expose selected services to the host machine, persistent volumes keep SonarQube data and application logs alive across container restarts, and environment variables inject runtime configuration like `SPRING_PROFILES_ACTIVE=prod` and `SNYK_TOKEN` at startup without touching the image.
@@ -93,7 +93,7 @@ Docker Compose provisions `greeting-api`, `sonarqube`, and `snyk` as connected s
 How JaCoCo, SonarQube, and Snyk work together to validate code quality and security before the application is considered deployable.
 
 <div align="center">
-  <img src="./images/quality-security-pipeline.svg" alt="Quality and Security Pipeline" width="100%"/>
+  <img src="./images/quality-security-pipeline.png" alt="Quality and Security Pipeline" width="100%"/>
 </div>
 
 JaCoCo instruments the bytecode during the test phase and generates a coverage report, which SonarQube then consumes alongside the source code to produce a full static analysis — checking for bugs, code smells, duplication, and maintainability issues against a quality gate. Snyk runs independently against the Maven dependency tree and the Docker image, scanning for known CVEs and vulnerable transitive dependencies that static analysis alone would not catch.
@@ -105,7 +105,7 @@ JaCoCo instruments the bytecode during the test phase and generates a coverage r
 How the system moves stage by stage from source code into a running observable platform.
 
 <div align="center">
-  <img src="./images/deployment-flow.svg" alt="Deployment Flow" width="100%"/>
+  <img src="./images/deployment-flow.png" alt="Deployment Flow" width="100%"/>
 </div>
 
 `mvn clean package` compiles, tests, and packages the application into an executable fat JAR, which Docker then picks up through a multi-stage build to produce the lightweight `greeting-api:latest` image. `docker compose up --build` takes that image and brings up the full stack — creating the network, mounting volumes, injecting environment variables, and starting all three containers as a connected operational environment.
