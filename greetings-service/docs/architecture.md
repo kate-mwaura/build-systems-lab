@@ -138,30 +138,82 @@ The 80% instruction coverage threshold was chosen as a practical middle ground. 
 
 ---
 
-## 12. Future Evolution
+## 12. Future-State Enterprise DevSecOps Architecture
 
-Where the architecture naturally grows from here as the system scales beyond a local deployment stack.
+Where the architecture naturally grows from here as the system scales into a full production engineering workflow.
 
-### Database Integration
+The diagram above maps the complete end-to-end pipeline — Source → Build → Scan → Package → Deploy → Observe — across eight stages with cross-cutting concerns applied at every layer.
 
-The application is currently stateless — responses are generated in-memory with no persistence layer. The next natural step is adding a relational database like PostgreSQL, which would introduce Spring Data JPA, entity models, repository layers, and schema migration tooling. Docker Compose would extend to orchestrate the database container alongside the API, with a persistent volume keeping data alive across container restarts.
+---
 
-### Kubernetes Replacing Docker Compose
+### Stage 1 — Source Control
 
-Docker Compose handles local orchestration well but is not built for production scale. Kubernetes would replace it with automated scheduling, self-healing containers, horizontal scaling, rolling deployments, and declarative infrastructure management through Pods, Services, ConfigMaps, and Secrets. The concepts introduced through Compose — networking, service discovery, environment injection, volume management — translate directly into Kubernetes primitives.
+GitHub remains the foundation. The evolution introduces a formal branch strategy — `feature/*` branches feeding into `develop`, which merges into `main`. This controls what gets built, when, and by whom, preventing unstable code from reaching the pipeline.
 
-### Centralized Logging
+### Stage 2 — Continuous Integration
 
-The current setup writes logs to a mounted volume inside the container. At scale, logs from multiple services and containers need to be aggregated centrally. A log shipper like Promtail or Fluentd would collect from `/app/logs/` and forward into a platform like Grafana Loki or the ELK stack, enabling searchable logs, cross-service tracing, alerting, and operational dashboards without manually inspecting individual containers.
+GitHub Actions automates the entire build pipeline on every push. Maven compiles and packages the application, Surefire runs unit tests, JaCoCo enforces coverage, SonarQube performs static analysis, and a quality gate validates everything before the pipeline continues. Nothing moves forward without passing the gate.
 
-### GitHub Actions CI/CD Pipeline
+### Stage 3 — Security and Quality Scanning
 
-Currently all operations — building, testing, quality analysis, Docker packaging — run manually. GitHub Actions would automate the entire pipeline on every Git push: compile, test, JaCoCo coverage, SonarQube analysis, Snyk scan, Docker build, image push, and deployment. This removes human error from the release process and enforces every quality gate automatically before anything reaches a running environment.
+Three dedicated security layers run in sequence. OWASP Dependency Check scans Maven dependencies for known vulnerabilities. Snyk performs a deeper security scan across the dependency tree. Trivy scans the container image for OS-level and runtime vulnerabilities. A security gate at the end of this stage blocks the pipeline if any critical issues are found.
 
-### NGINX Reverse Proxy and TLS
+### Stage 4 — Artifact and Image Build
 
-The application currently exposes ports directly to the host machine. In production, traffic would pass through an NGINX reverse proxy sitting in front of the Spring Boot container, handling TLS termination, HTTPS, request routing, rate limiting, and security headers. The container itself would no longer be publicly reachable — only NGINX would be exposed.
+Spring Boot packages the application into an executable JAR. Docker picks it up through the multi-stage build — the builder stage compiles and packages, the runtime stage produces a lightweight container image. The final container image is validated and ready to push.
 
-### Secrets Management with Vault
+### Stage 5 — Registry and Artifact Management
 
-Environment variables work for local development and small projects but become difficult to manage as systems grow — especially when secrets rotate, teams multiply, or compliance requirements increase. HashiCorp Vault would replace static environment variables with encrypted secret storage, dynamic credentials, rotation policies, and audit logging. Containers would retrieve secrets at startup rather than having them embedded in deployment configuration.
+The container image is pushed to an artifact registry — JFrog Artifactory or any OCI-compatible registry. Docker Registry stores versioned images. Image metadata, SBOM, and provenance information are attached to the artifact, giving the pipeline full traceability from source commit to deployed image.
+
+### Stage 6 — Deployment Automation
+
+ArgoCD takes the versioned image and handles GitOps continuous delivery — syncing the desired state from Git into the cluster automatically. Kubernetes orchestrates the running containers with self-healing, rolling deployments, and automatic rollback. Deployment sync keeps the cluster state aligned with what is declared in the repository.
+
+### Stage 7 — Runtime Delivery
+
+NGINX Ingress sits in front of the cluster handling reverse proxy, routing, and TLS termination. Spring Boot runs inside Kubernetes pods with the production profile active. Spring Actuator exposes health and metrics endpoints consumed by the observability layer.
+
+### Stage 8 — Observability and Monitoring
+
+Prometheus collects metrics from Actuator endpoints and fires alerts. Grafana visualizes those metrics as operational dashboards. Loki aggregates logs from all running containers and makes them queryable — replacing the mounted volume approach with centralized, searchable log infrastructure.
+
+---
+
+### Cross-Cutting Concerns
+
+These apply across every stage of the pipeline, not just at specific points.
+
+**Secrets Management** — HashiCorp Vault replaces static environment variables with dynamic secrets, rotation policies, and audit logging. Containers retrieve credentials at startup rather than having them embedded in configuration.
+
+**RBAC and Access Control** — Least privilege access enforced through IAM integration. No service or engineer has more access than their role requires.
+
+**Policy as Code** — OPA and Conftest enforce security and compliance policies automatically as part of the pipeline, not as manual review steps.
+
+**Infrastructure as Code** — Helm and Kustomize manage Kubernetes manifests declaratively. Every infrastructure change is version controlled and reproducible.
+
+**Pipeline Quality** — Code quality gates and security gates run at multiple points. Nothing reaches production without passing both.
+
+**Audit and Compliance** — Logs, events, and audit trails are captured across every stage for compliance and incident investigation.
+
+**Notifications** — Slack, email, and webhook integrations alert the right people when gates fail, deployments succeed, or incidents occur.
+
+---
+
+### Pipeline Principles
+
+The architecture is built around five engineering principles that apply regardless of which tools are in use.
+
+**Shift Left Security** — security scanning happens early in the pipeline, not after deployment. Finding vulnerabilities at build time is significantly cheaper than finding them in production.
+
+**Automate Everything** — every manual step is a source of inconsistency. The pipeline enforces quality, security, and deployment automatically without human intervention at each stage.
+
+**Fail Fast** — quality gates and security gates fail the pipeline immediately when thresholds are not met. Fast failure is cheaper than slow discovery.
+
+**Observe Continuously** — metrics, logs, and alerts run continuously in production. The system is always visible, not just when something breaks.
+
+**Evolve Continuously** — the pipeline is designed to grow. New tools, new stages, and new policies can be added without rebuilding the foundation.
+
+<div align="center">
+  <img src="./images/future-evolution.png" alt="Deployment Flow" width="100%"/>
+</div>
