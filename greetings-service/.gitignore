@@ -1,7 +1,0 @@
-# Ignore Maven target directories
-target/
-**/target/
-
-# Ignore docs files
-docs/article.md
-docs/medium.md
